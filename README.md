@@ -76,5 +76,5 @@ For the SPARQL module to function an RDF dataset must be uploaded to Strabon. To
 ## Known Issues
 - The connection between the Strabon and PostGIS is known to break upon restarting their containers. To fix this, with all containers stopped, delete the Strabon container and restart the service with docker-compose:
 ```
-docker rm ud-demo-graph-sparql_strabon_1
+docker rm tiw5-urbandatasemanticvisualization-strabon-1
 ```
