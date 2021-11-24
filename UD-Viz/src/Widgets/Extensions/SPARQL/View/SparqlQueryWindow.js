@@ -94,7 +94,7 @@ WHERE {
 
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
-      (data) => this.updateDataView(data, undefined)
+      (data) => this.updateDataView(data, document.getElementById(this.resultSelectId).value)
     );
 
     this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) =>
@@ -111,9 +111,22 @@ WHERE {
    * @param {Object} viewType The selected semantic data view type.
    */
   updateDataView(data, viewType) {
-    this.graph.update(data);
-    this.dataView.style['visibility'] = 'visible';
-    this.dataView.append(this.graph.data);
+    switch(viewType){
+      case 'graph':
+        this.graph.update(data);
+        this.dataView.style['visibility'] = 'visible';
+        this.dataView.append(this.graph.data);
+        break;
+      case 'json':
+        var  jsonData=JSON.stringify(data, undefined, 2);
+       // this.dataView.append(jsonData);
+        console.log(jsonData);
+        break;
+      default:
+        console.log("ce format est pas disponible");
+
+    }
+   
   }
 
   // SPARQL Window getters //
