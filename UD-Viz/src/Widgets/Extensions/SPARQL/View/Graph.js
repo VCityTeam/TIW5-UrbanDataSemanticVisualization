@@ -119,7 +119,7 @@ export class Graph {
   }
 
   /**
-   * Show the graph SVG
+   * Show the SVG graph
    */
   show() {
     this.svg.style('display', 'visible');
