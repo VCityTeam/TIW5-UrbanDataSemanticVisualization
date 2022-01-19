@@ -1,9 +1,11 @@
 import { CityObjectProvider } from '../../../CityObjects/ViewModel/CityObjectProvider';
+import { SemanticDataWindow } from '../View/SemanticDataWindow';
+
 
 /**
  * A CityObjectProvider extention for selecting CityObjects using the batch table.
  */
-export class ExtendedCityObjectProvider extends CityObjectProvider {
+export class ExtendedCityObjectProvider extends CityObjectProvider{
   /**
    * Create an ExtendedCityObjectProvider to provide cityobjects to the module
    * using a LayerManager
@@ -12,13 +14,17 @@ export class ExtendedCityObjectProvider extends CityObjectProvider {
    */
   constructor(layerManager) {
     super(layerManager);
+    this.window = new SemanticDataWindow();
   }
+ 
 
   /**
    * Select a city object based on a corresponding key,value pair in the batch table.
    * @param {string} uri the URI to search by.
    */
   selectCityObjectByBatchTable(key, value) {
+    this.windowSemanticData = new SemanticDataWindow();
+    this.windowSemanticData.enableView();
     let cityObject = this.layerManager.pickCityObjectByBatchTable(key, value);
     if (cityObject) {
       if (this.selectedCityObject != cityObject) {
@@ -54,5 +60,15 @@ export class ExtendedCityObjectProvider extends CityObjectProvider {
         this.removeLayer();
       }
     }
+  }
+  enableView() {
+    this.windowSemanticData.appendTo(this.parentElement);
+  }
+
+  /**
+   *  Close the view
+   */
+  disableView() {
+    this.windowSemanticData.dispose();
   }
 }
