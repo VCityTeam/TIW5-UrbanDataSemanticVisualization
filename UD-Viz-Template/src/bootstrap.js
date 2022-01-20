@@ -71,4 +71,11 @@ app.start('../assets/config/config.json').then(() => {
   app.addModuleView('sparqlModule', sparqlModule.view, {
     name: 'SPARQL Query'
   });
+
+  ////// TEMPORAL MODULE
+  const temporalModule = new udv.Widgets.TemporalModule(
+    app.layerManager.tilesManagers[0],
+    app.config.temporalModule
+  );
+  app.addModuleView('temporal', temporalModule.view);
 });
