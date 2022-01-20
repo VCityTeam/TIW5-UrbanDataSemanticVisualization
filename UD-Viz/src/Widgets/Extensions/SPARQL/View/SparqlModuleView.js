@@ -3,7 +3,6 @@ import { SparqlEndpointResponseProvider } from '../ViewModel/SparqlEndpointRespo
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import { SparqlQueryWindow } from './SparqlQueryWindow';
 import { LayerManager } from '../../../Components/Components';
-import { SemanticDataWindow } from './SemanticDataWindow';
 
 /**
  * The SPARQL ModuleView class which manages the SPARQL query window.

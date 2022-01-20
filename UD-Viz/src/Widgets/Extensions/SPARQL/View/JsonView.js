@@ -40,11 +40,20 @@ export class JsonView {
   
      
   }
+  /**
+   * 
+   * @param {*} data 
+   */
 
   appendData(data) {
     var  canvas= document.getElementById("myCanvas");
     canvas.textContent=JSON.stringify(data, undefined, 2);
   }
+
+  /**
+   * 
+   * @param {*} data 
+   */
 
   canvasHtml(data){
     var canv=document.createElement("canvas")

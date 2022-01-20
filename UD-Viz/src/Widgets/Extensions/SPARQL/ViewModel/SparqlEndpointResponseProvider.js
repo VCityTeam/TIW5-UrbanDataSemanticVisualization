@@ -39,6 +39,10 @@ export class SparqlEndpointResponseProvider extends EventSender {
     this.registerEvent(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED
     );
+
+    this.registerEventSemanticData(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA
+    );
   }
 
   /**
@@ -53,7 +57,35 @@ export class SparqlEndpointResponseProvider extends EventSender {
       this.getResponseDataAsGraph()
     );
   }
+  /**
+   * 
+   * @param {*} jsonData 
+   * @returns 
+   */
+  getResponseDataAsJson(jsonData){
+    var jsonEditedResult = {
+    };
+    for(var key in jsonData) {    
+      var item = jsonData[key];
+      console.log('item', this.tokenizeURI(item.predicate.value).id);
+      jsonEditedResult[this.tokenizeURI(item.predicate.value).id] = item.object.value;
+    }
+    return jsonEditedResult;
+  }
 
+  /**
+   * 
+   * @param {*} query 
+   */
+  async querySparqlEndpointServiceSemanticData(query) {
+    this.response = await this.service.querySparqlEndpoint(query);
+    console.log(this.response);
+    await this.sendEvent(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
+      this.getResponseDataAsJson(this.response.results.bindings)
+    );
+  }
+ 
   /**
    * return the most recently cached query response formatted for a D3.js graph.
    * @return {Object}
@@ -150,5 +182,9 @@ export class SparqlEndpointResponseProvider extends EventSender {
 
   static get EVENT_ENDPOINT_RESPONSE_UPDATED() {
     return 'EVENT_ENDPOINT_RESPONSE_UPDATED';
+  }
+
+  static get EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA() {
+    return 'EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA';
   }
 }

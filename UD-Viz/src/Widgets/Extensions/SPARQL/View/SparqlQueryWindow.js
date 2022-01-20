@@ -17,7 +17,9 @@ export class SparqlQueryWindow extends Window {
    * @param {SparqlEndpointResponseProvider} sparqlProvider The SPARQL Endpoint Response Provider
    * @param {ExtendedCityObjectProvider} cityObjectProvider The City Object Provider
    * @param {LayerManager} layerManager The UD-Viz LayerManager.
+   * 
    */
+ 
   constructor(sparqlProvider, cityObjectProvider, layerManager) {
     super('sparqlQueryWindow', 'SPARQL Query');
 
@@ -88,22 +90,37 @@ WHERE {
    * the window is actually usable ; service event listerers are set here.
    * @param {SparqlEndpointService} service The SPARQL endpoint service.
    */
-  windowCreated() {
+  windowCreated() 
+  {
     this.form.onsubmit = () => {
       this.sparqlProvider.querySparqlEndpointService(this.queryTextArea.value);
       return false;
     };
-
+  
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
       (data) => this.updateDataView(data, document.getElementById(this.resultSelectId).value)
     );
 
-    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) =>
-      this.cityObjectProvider.selectCityObjectByBatchTable(
+    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) => {
+      this.semanticDataView.hidden=false;
+      var idBatiment= this.sparqlProvider.tokenizeURI(uri).id; //get id of selected building
+      //Get building informations based on id
+      var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
+    SELECT * 
+    WHERE {?subject ?predicate ?object . 
+    FILTER((?subject = mydata:${idBatiment}))
+    }`;
+      this.sparqlProvider.querySparqlEndpointServiceSemanticData(semantic_data_query);
+      return this.cityObjectProvider.selectCityObjectByBatchTable(
         'gml_id',
         this.sparqlProvider.tokenizeURI(uri).id
       )
+    }
+    );
+    this.sparqlProvider.addEventListener(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
+      (data) => this.updateSemanticDataView(data)
     );
   }
 
@@ -186,6 +203,19 @@ WHERE {
     }
    
   }
+  /**
+   * Update the window to show semantic data of given node
+   * @param {*} data  SPARQL query response data
+   */
+
+  updateSemanticDataView(data) {
+    var  jsonData=JSON.stringify(data, undefined, 2);
+   // this.dataView.append(jsonData);
+    this.semanticDataView.style['visibility'] = 'visible';
+    this.semanticDataView.innerHTML="";
+    this.semanticDataView.append(jsonData);
+    console.log(jsonData);  
+  }
 
   // SPARQL Window getters //
   get innerContentHtml() {
@@ -202,9 +232,21 @@ WHERE {
         <option value="json">JSON</option>
         <option value="timeline">Timeline</option>
       </select>
-      <div id="${this.dataViewId}"/>`;
+      <div id="${this.dataViewId}"></div>
+      <div id="${this.semanticDataViewId}">
+        <label>data</label>
+      </div>
+      `;
   }
 
+  get semanticDataViewId() {
+    return `${this.windowId}_semantic_data_view`;
+  }
+
+  get semanticDataView() {
+    return document.getElementById(this.semanticDataViewId);
+  }
+  
   get dataViewId() {
     return `${this.windowId}_data_view`;
   }
@@ -244,6 +286,12 @@ WHERE {
   get queryTextArea() {
     return document.getElementById(this.queryTextAreaId);
   }
+  get idBatiment(){
+    return this.idBatiment;
+  }
+  set idBatiment(val) {
+    this.idBatiment=val;
+   }
 
   static get EVENT_NODE_SELECTED() {
     return 'EVENT_NODE_SELECTED';
