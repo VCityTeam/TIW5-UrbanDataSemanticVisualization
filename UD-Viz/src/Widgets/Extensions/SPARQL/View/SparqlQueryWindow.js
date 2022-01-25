@@ -6,6 +6,7 @@ import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvi
 import './SparqlQueryWindow.css';
 import { BuildingGraph } from './BuildingGraph';
 import { JsonView } from './JsonView';
+import * as d3 from 'd3';
 
 /**
  * The SPARQL query window class which provides the user interface for querying
@@ -137,8 +138,45 @@ WHERE {
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
       (data) => this.updateSemanticDataView(data)
     );
+  }
 
+  /**
+   * Transform js array to html table using d3 library
+   *
+   * @param {Object[]} data
+   * @param {string[]} columns
+   * @returns
+   */
+  dataAsTable(data, columns) {
+    var table = d3.select('body').append('table')
+    var thead = table.append('thead')
+    var tbody = table.append('tbody');
 
+    // append the header row
+    thead.append('tr')
+        .selectAll('th')
+        .data(columns).enter()
+        .append('th')
+        .text(function (column) { return column; });
+
+    // create a row for each object in the data
+    var rows = tbody.selectAll('tr')
+        .data(data)
+        .enter()
+        .append('tr');
+
+    // create a cell in each row for each column
+    var cells = rows.selectAll('td')
+        .data(function (row) {
+          return columns.map(function (column) {
+            return {column: column, value: row[column]};
+          });
+        })
+        .enter()
+        .append('td')
+        .text(function (d) { return d.value; });
+
+    return table;
   }
 
   /**
@@ -149,19 +187,35 @@ WHERE {
   updateDataView(data, viewType) {
     switch(viewType){
       case 'graph':
-        this.hideJsonWindow();
-        this.showGraphWindow();
+        // this.hideJsonWindow();
+        // this.showGraphWindow();
+        this.dataView.innerHTML="";
         this.graph.update(data);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.append(this.graph.data);
         break;
       case 'json':
-        this.hideGraphWindow();
-        this.showJsonWindow();
+        // this.hideGraphWindow();
+        // this.showJsonWindow();
         var  jsonData=JSON.stringify(data, undefined, 2);
-        this.jsonView.update(jsonData);
-        this.jsonDataView.style['visibility'] = 'visible';
-        this.jsonDataView.append(this.jsonView.data);
+        this.dataView.style['visibility'] = 'visible';
+        this.dataView.innerHTML="";
+        this.dataView.append(jsonData);
+        console.log(jsonData);
+        break;
+      case 'table':
+        console.log(data);
+        this.dataView.innerHTML="";
+        var jsonData=JSON.stringify(data,undefined, 2);
+        this.dataView.style['visibility'] = 'visible';
+        let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
+        this.dataView.append(result._parents[0].getElementsByTagName('table')[0]);
+        this.dataView.querySelector("table").style['border']='1px solid white';
+        this.dataView.querySelector("table").style['width']='100%';
+        var sheet = window.document.styleSheets[0];
+        sheet.insertRule('thead { color: #90EE90; margin:auto; }', sheet.cssRules.length);
+
+        sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
         break;
       default:
         console.log('ce format est pas disponible');
