@@ -7,4 +7,7 @@ export class EnumTemporalWindow {
   static get GRAPHWINDOW() {
     return 'GRAPHWINDOW';
   }
+
+  // ici qu'on doit declarer les objets manquants 
+  
 }
