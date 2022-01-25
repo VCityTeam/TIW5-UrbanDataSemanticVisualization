@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import { SparqlQueryWindow } from './SparqlQueryWindow';
 
-export class BatimentGraph {
+export class BuildingGraph {
   /**
    * Create a new D3 graph from an RDF JSON object.
    * Adapted from https://observablehq.com/@d3/force-directed-graph#chart and

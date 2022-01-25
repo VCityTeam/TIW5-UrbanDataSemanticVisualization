@@ -30,15 +30,16 @@ export class JsonView {
      */
   update(data) {
     this.clear();
-    var  jsonData=JSON.stringify(data, undefined, 2);
-    console.log('json:::::::',jsonData);
-    this.svg
-      .append('g')
-      .selectAll('text')
-      .data(jsonData)
-      .html((d)=>{
-        return d;
-      });
+    console.log('json:::::::',data);
+    this.svg.append('tr')
+        .attr('class','head')
+        .selectAll('th')
+        .data(data)
+        .enter()
+        .append('th')
+        .html((d)=> {
+          return d;
+        });
   }
 
   /**

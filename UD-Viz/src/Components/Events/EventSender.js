@@ -32,6 +32,9 @@ export class EventSender {
   registerEventSemanticData(event) {
     this.eventListeners[event] = [];
   }
+  registerEventJsonData(event){
+    this.eventListeners[event]=[];
+  }
 
   /**
      * Registers an event listener attached to a specific event. The `action`

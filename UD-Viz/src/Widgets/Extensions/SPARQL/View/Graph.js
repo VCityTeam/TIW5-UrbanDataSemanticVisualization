@@ -42,7 +42,7 @@ export class Graph {
         d3.forceLink(links).id((d) => d.id)
       )
       .force('charge', d3.forceManyBody())
-      .force('center', d3.forceCenter(this.width / 2, this.height / 2));
+      .force('center', d3.forceCenter(this.width / 2, this.height / 3));
 
     const zoom = d3.zoom().on('zoom', this.handleZoom);
 

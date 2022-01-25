@@ -43,6 +43,8 @@ export class SparqlEndpointResponseProvider extends EventSender {
     this.registerEventSemanticData(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA
     );
+
+    this.registerEventJsonData( SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA);
   }
 
   /**
@@ -56,6 +58,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
       this.getResponseDataAsGraph()
     );
+
   }
   /**
    * 
@@ -67,10 +70,56 @@ export class SparqlEndpointResponseProvider extends EventSender {
     };
     for(var key in jsonData) {    
       var item = jsonData[key];
-      console.log('item', this.tokenizeURI(item.predicate.value).id);
+      //  console.log('item', this.tokenizeURI(item.predicate.value).id);
       jsonEditedResult[this.tokenizeURI(item.predicate.value).id] = item.object.value;
     }
     return jsonEditedResult;
+  }
+
+  /**
+   *
+   * @param {*} batimentDetail
+   * @returns
+   */
+  getResponseDataBatimentAsGraph(batimentDetail){
+
+    let graphData = {
+      nodes: [
+        // { id: 'x', namespace: 1 },
+        // { id: 'y', namespace: 2 },
+      ],
+      links: [
+        // { source: 'x', target: 'y', value: 1 }
+      ],
+      legend: undefined,
+    };
+
+    for (let triple of this.response.results.bindings) {
+      if (
+        graphData.nodes.find((n) => n.id == triple.subject.value) == undefined
+      ) {
+        let subjectNamespaceId = this.getNamespaceIndex(
+          triple.object.value
+        );
+        let node = { id: triple.subject.value, namespace: subjectNamespaceId };
+        graphData.nodes.push(node);
+      }
+      if (
+        graphData.nodes.find((n) => n.id == triple.object.value) == undefined
+      ) {
+        let objectNamespaceId = this.getNamespaceIndex(triple.subject.value);
+        let node = { id: triple.object.value, namespace: objectNamespaceId };
+        graphData.nodes.push(node);
+      }
+      let link = {
+        source: triple.subject.value,
+        target: triple.object.value,
+        label: triple.predicate.value,
+      };
+      graphData.links.push(link);
+    }
+    graphData.legend = this.namespaces;
+    return graphData;
   }
 
   /**
@@ -79,12 +128,21 @@ export class SparqlEndpointResponseProvider extends EventSender {
    */
   async querySparqlEndpointServiceSemanticData(query) {
     this.response = await this.service.querySparqlEndpoint(query);
-    console.log(this.response);
     await this.sendEvent(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
+      this.getResponseDataBatimentAsGraph(this.response.results.bindings)
+    );
+  }
+  ///////////////////////////////////////////////////////////////////:mes modifs
+  async querySparqlEndpointServiceJsonData(query) {
+    this.response = await this.service.querySparqlEndpoint(query);
+    await this.sendEvent(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA,
       this.getResponseDataAsJson(this.response.results.bindings)
     );
   }
+
+  ////////////////////////////////////////: Mes mofids
  
   /**
    * return the most recently cached query response formatted for a D3.js graph.
@@ -186,5 +244,10 @@ export class SparqlEndpointResponseProvider extends EventSender {
 
   static get EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA() {
     return 'EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA';
+  }
+
+  // Mes ajouts
+  static get EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA() {
+    return 'EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA';
   }
 }
