@@ -16,14 +16,14 @@
   padding-top: 3px;
   visibility: hidden;
   overflow: scroll;
-  height: 250px;
+  height: 200px;
 }
 #_window_sparqlQueryWindow_semantic_data_view {
   visibility: hidden;
   width: 100%;
   padding-top: 3px;
   overflow: scroll;
-  height: 200px;
+  height: 150px;
 }
 #_window_sparqlQueryWindow_json_data_view{
   visibility: hidden;
