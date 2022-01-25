@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import { SparqlQueryWindow } from './SparqlQueryWindow';
 
-export class JsonView {
+export class BatimentGraph {
   /**
    * Create a new D3 graph from an RDF JSON object.
    * Adapted from https://observablehq.com/@d3/force-directed-graph#chart and
@@ -18,35 +18,10 @@ export class JsonView {
 
     this.svg = d3
       .create('svg')
-
-      .attr('class', 'jsonview')
+      .attr('class', 'batimentGraph')
       .attr('viewBox', [0, 0, this.width, this.height])
-
-      // .append('xhtml:table')
       .style('display', 'hidden');
-
   }
-
-  //mes ajouts
-  // get innerBatimentContent(){
-  //   return  /*html*/ `
-  //    <table id="batimentDetail">
-  //       <thead>
-  //           <th>ID Batiment</th>
-  //           <th>Coordinate Dimension</th>
-  //           <th>ID Batiment</th>
-  //           <th>Coordinate Dimension</th>
-  //           <th>ID Batiment</th>
-  //            <th>ID Batiment</th>
-  //       </thead>
-  //     <tbody>
-  //
-  //      </tbody>
-  //    </table>
-  //   `;
-  // }
-
-
 
   /**
    * Create a new graph based on an graph dataset.
@@ -55,18 +30,6 @@ export class JsonView {
    */
   update(data) {
     this.clear();
-    // var  jsonData=JSON.stringify(data, undefined, 2);
-    // console.log('donneeesssss json',jsonData);
-    // this.svg.getJSON(jsonData)
-    //   .append('tr')
-    //   .selectAll('th')
-    //   .data(jsonData)
-    //   .enter()
-    //   .append('th')
-    //   .html((d)=> {
-    //     return d;
-    //   });
-    console.log(data);
     const links = data.links.map((d) => Object.create(d));
     const nodes = data.nodes.map((d) => Object.create(d));
     const namespaces = data.legend;
@@ -78,7 +41,7 @@ export class JsonView {
         d3.forceLink(links).id((d) => d.id)
       )
       .force('charge', d3.forceManyBody())
-      .force('center', d3.forceCenter(this.width / 2, this.height / 2));
+      .force('center', d3.forceCenter(this.width / 2, this.height / 4));
 
     const zoom = d3.zoom().on('zoom', this.handleZoom);
 
@@ -120,32 +83,6 @@ export class JsonView {
 
       node.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
     });
-
-    // Create legend
-    this.svg
-      .append('g')
-      .attr('stroke', '#333')
-      .attr('stroke-width', 1)
-      .selectAll('rect')
-      .data(namespaces)
-      .join('rect')
-      .attr('x', 10)
-      .attr('y', (d, i) => 10 + i * 16)
-      .attr('width', 10)
-      .attr('height', 10)
-      .style('fill', (d, i) => colorScale(i))
-      .append('title')
-      .text((d) => d);
-
-    this.svg
-      .append('g')
-      .selectAll('text')
-      .data(namespaces)
-      .join('text')
-      .attr('x', 24)
-      .attr('y', (d, i) => 20 + i * 16)
-      .text((d) => d);
-
   }
 
   /**
