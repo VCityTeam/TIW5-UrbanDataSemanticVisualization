@@ -107,10 +107,17 @@ WHERE {
     );
   }
 
+  /**
+   * Transform js array to html table using d3 library
+   * 
+   * @param {Object[]} data 
+   * @param {string[]} columns 
+   * @returns 
+   */
   dataAsTable(data, columns) {
     var table = d3.select('body').append('table')
     var thead = table.append('thead')
-    var    tbody = table.append('tbody');
+    var tbody = table.append('tbody');
   
     // append the header row
     thead.append('tr')
@@ -166,9 +173,13 @@ WHERE {
         var jsonData=JSON.stringify(data,undefined, 2);
         this.dataView.style['visibility'] = 'visible';
         let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
-        console.log(result._parents[0]);
-        console.log(result._parents[0].getElementsByTagName('table')[0]);
         this.dataView.append(result._parents[0].getElementsByTagName('table')[0]);
+        this.dataView.querySelector("table").style['border']='1px solid white';
+        this.dataView.querySelector("table").style['width']='100%';
+        var sheet = window.document.styleSheets[0];
+        sheet.insertRule('thead { color: #90EE90; margin:auto; }', sheet.cssRules.length);
+
+        sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
         break;
       default:
         console.log("ce format est pas disponible");
