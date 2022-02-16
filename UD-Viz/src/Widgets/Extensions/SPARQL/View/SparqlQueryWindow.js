@@ -4,8 +4,9 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
+import { BuildingGraph } from './BuildingGraph';
+import { JsonView } from './JsonView';
 import * as d3 from 'd3';
-
 
 /**
  * The SPARQL query window class which provides the user interface for querying
@@ -17,7 +18,9 @@ export class SparqlQueryWindow extends Window {
    * @param {SparqlEndpointResponseProvider} sparqlProvider The SPARQL Endpoint Response Provider
    * @param {ExtendedCityObjectProvider} cityObjectProvider The City Object Provider
    * @param {LayerManager} layerManager The UD-Viz LayerManager.
+   * 
    */
+ 
   constructor(sparqlProvider, cityObjectProvider, layerManager) {
     super('sparqlQueryWindow', 'SPARQL Query');
 
@@ -48,6 +51,21 @@ export class SparqlQueryWindow extends Window {
      * @type {Graph}
      */
     this.graph = new Graph(this);
+
+
+    /**
+     * Contains the D3 graph view to display building
+     *
+     * @type {Graph}
+     */
+    this.building=new BuildingGraph(this);
+
+    /**
+     * Contains the D3 Json View
+     *
+     * @type {Graph}
+     */
+    this.jsonView=new JsonView(this);
 
     /**
      * The initial SPARQL query to display upon window initialization.
@@ -88,61 +106,76 @@ WHERE {
    * the window is actually usable ; service event listerers are set here.
    * @param {SparqlEndpointService} service The SPARQL endpoint service.
    */
-  windowCreated() {
+  windowCreated() 
+  {
     this.form.onsubmit = () => {
       this.sparqlProvider.querySparqlEndpointService(this.queryTextArea.value);
       return false;
     };
-
+  
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
       (data) => this.updateDataView(data, document.getElementById(this.resultSelectId).value)
     );
 
-    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) =>
-      this.cityObjectProvider.selectCityObjectByBatchTable(
+    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) => {
+      this.semanticDataView.hidden=false;
+      var idBatiment= this.sparqlProvider.tokenizeURI(uri).id; //get id of selected building
+      //Get building informations based on id
+      var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
+    SELECT * 
+    WHERE {?subject ?predicate ?object . 
+    FILTER((?subject = mydata:${idBatiment}))
+    }`;
+      this.sparqlProvider.querySparqlEndpointServiceSemanticData(semantic_data_query);
+      return this.cityObjectProvider.selectCityObjectByBatchTable(
         'gml_id',
         this.sparqlProvider.tokenizeURI(uri).id
-      )
+      );
+    }
+    );
+    this.sparqlProvider.addEventListener(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
+      (data) => this.updateSemanticDataView(data)
     );
   }
 
   /**
    * Transform js array to html table using d3 library
-   * 
-   * @param {Object[]} data 
-   * @param {string[]} columns 
-   * @returns 
+   *
+   * @param {Object[]} data
+   * @param {string[]} columns
+   * @returns
    */
   dataAsTable(data, columns) {
     var table = d3.select('body').append('table')
     var thead = table.append('thead')
     var tbody = table.append('tbody');
-  
+
     // append the header row
     thead.append('tr')
-      .selectAll('th')
-      .data(columns).enter()
-      .append('th')
+        .selectAll('th')
+        .data(columns).enter()
+        .append('th')
         .text(function (column) { return column; });
-  
+
     // create a row for each object in the data
     var rows = tbody.selectAll('tr')
-      .data(data)
-      .enter()
-      .append('tr');
-  
+        .data(data)
+        .enter()
+        .append('tr');
+
     // create a cell in each row for each column
     var cells = rows.selectAll('td')
-      .data(function (row) {
-        return columns.map(function (column) {
-          return {column: column, value: row[column]};
-        });
-      })
-      .enter()
-      .append('td')
+        .data(function (row) {
+          return columns.map(function (column) {
+            return {column: column, value: row[column]};
+          });
+        })
+        .enter()
+        .append('td')
         .text(function (d) { return d.value; });
-  
+
     return table;
   }
 
@@ -152,15 +185,18 @@ WHERE {
    * @param {Object} viewType The selected semantic data view type.
    */
   updateDataView(data, viewType) {
-    console.log(data);
     switch(viewType){
       case 'graph':
-        this.graph.update(data);
+        // this.hideJsonWindow();
+        // this.showGraphWindow();
         this.dataView.innerHTML="";
+        this.graph.update(data);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.append(this.graph.data);
         break;
       case 'json':
+        // this.hideGraphWindow();
+        // this.showJsonWindow();
         var  jsonData=JSON.stringify(data, undefined, 2);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.innerHTML="";
@@ -168,7 +204,6 @@ WHERE {
         console.log(jsonData);
         break;
       case 'table':
-        console.log(data);
         this.dataView.innerHTML="";
         var jsonData=JSON.stringify(data,undefined, 2);
         this.dataView.style['visibility'] = 'visible';
@@ -182,9 +217,21 @@ WHERE {
         sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
         break;
       default:
-        console.log("ce format est pas disponible");
+        console.log('ce format est pas disponible');
+
     }
    
+  }
+  /**
+   * Update the window to show semantic data of given node
+   * @param {*} data  SPARQL query response data
+   */
+
+  updateSemanticDataView(data) {
+    this.building.update(data);
+    this.semanticDataView.style['visibility'] = 'visible';
+    this.semanticDataView.innerHTML='';
+    this.semanticDataView.append(this.building.data);
   }
 
   // SPARQL Window getters //
@@ -199,12 +246,53 @@ WHERE {
       <select id="${this.resultSelectId}">
         <option value="graph">Graph</option>
         <option value="table">Table</option>
-        <option value="json">JSON</option>
+        <option value="json">Json</option>
         <option value="timeline">Timeline</option>
       </select>
-      <div id="${this.dataViewId}"/>`;
+      <div id="${this.dataViewId}"></div>
+      <div id="${this.semanticDataViewId}"></div>
+      <div id="${this.jsonDataViewId}"></div>
+      
+      `;
   }
 
+  hideGraphWindow(){
+    document.getElementById(this.dataViewId).style.display='none';
+    document.getElementById(this.semanticDataViewId).style.display='none';
+  }
+
+  hideJsonWindow(){
+    document.getElementById(this.jsonDataViewId).style.display='none';
+  }
+
+  showGraphWindow(){
+    document.getElementById(this.dataViewId).style.display='block';
+    document.getElementById(this.semanticDataViewId).style.display='block';
+  }
+
+  showJsonWindow(){
+    document.getElementById(this.jsonDataViewId).style.display='block';
+  }
+
+  get jsonDataViewId(){
+    return `${this.windowId}_json_data_view`;
+
+  }
+
+  get jsonDataView() {
+    return document.getElementById(this.jsonDataViewId);
+  }
+
+  get semanticDataViewId() {
+    return `${this.windowId}_semantic_data_view`;
+  }
+
+
+
+  get semanticDataView() {
+    return document.getElementById(this.semanticDataViewId);
+  }
+  
   get dataViewId() {
     return `${this.windowId}_data_view`;
   }
@@ -243,6 +331,12 @@ WHERE {
 
   get queryTextArea() {
     return document.getElementById(this.queryTextAreaId);
+  }
+  get idBatiment(){
+    return this.idBatiment;
+  }
+  set idBatiment(val) {
+    this.idBatiment=val;
   }
 
   static get EVENT_NODE_SELECTED() {

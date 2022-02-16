@@ -3,7 +3,7 @@ import { CityObjectProvider } from '../../../CityObjects/ViewModel/CityObjectPro
 /**
  * A CityObjectProvider extention for selecting CityObjects using the batch table.
  */
-export class ExtendedCityObjectProvider extends CityObjectProvider {
+export class ExtendedCityObjectProvider extends CityObjectProvider{
   /**
    * Create an ExtendedCityObjectProvider to provide cityobjects to the module
    * using a LayerManager
@@ -13,6 +13,7 @@ export class ExtendedCityObjectProvider extends CityObjectProvider {
   constructor(layerManager) {
     super(layerManager);
   }
+ 
 
   /**
    * Select a city object based on a corresponding key,value pair in the batch table.
@@ -55,4 +56,5 @@ export class ExtendedCityObjectProvider extends CityObjectProvider {
       }
     }
   }
+  
 }

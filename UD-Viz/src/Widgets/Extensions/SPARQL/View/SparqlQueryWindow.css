@@ -15,8 +15,22 @@
   width: 100%;
   padding-top: 3px;
   visibility: hidden;
-  overflow: scroll; 
-  height: 300px;
+  overflow: scroll;
+  height: 200px;
+}
+#_window_sparqlQueryWindow_semantic_data_view {
+  visibility: hidden;
+  width: 100%;
+  padding-top: 3px;
+  overflow: scroll;
+  height: 150px;
+}
+#_window_sparqlQueryWindow_json_data_view{
+  visibility: hidden;
+  width: 100%;
+  padding-top: 3px;
+  overflow: scroll;
+  height: 200px;
 }
 
 .d3_graph {
