@@ -204,7 +204,6 @@ WHERE {
         console.log(jsonData);
         break;
       case 'table':
-        console.log(data);
         this.dataView.innerHTML="";
         var jsonData=JSON.stringify(data,undefined, 2);
         this.dataView.style['visibility'] = 'visible';

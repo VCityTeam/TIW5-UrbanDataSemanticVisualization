@@ -30,7 +30,6 @@ export class JsonView {
      */
   update(data) {
     this.clear();
-    console.log('json:::::::',data);
     this.svg.append('tr')
         .attr('class','head')
         .selectAll('th')

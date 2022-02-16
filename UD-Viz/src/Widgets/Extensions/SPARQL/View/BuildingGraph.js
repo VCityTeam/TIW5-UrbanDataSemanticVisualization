@@ -30,6 +30,8 @@ export class BuildingGraph {
    */
   update(data) {
     this.clear();
+    var jsonData = JSON.stringify(data, undefined, 2);
+    console.log(jsonData);
     const links = data.links.map((d) => Object.create(d));
     const nodes = data.nodes.map((d) => Object.create(d));
     const namespaces = data.legend;
@@ -41,7 +43,7 @@ export class BuildingGraph {
         d3.forceLink(links).id((d) => d.id)
       )
       .force('charge', d3.forceManyBody())
-      .force('center', d3.forceCenter(this.width / 2, this.height / 4));
+      .force('center', d3.forceCenter(this.width / 2, this.height / 5));
 
     const zoom = d3.zoom().on('zoom', this.handleZoom);
 

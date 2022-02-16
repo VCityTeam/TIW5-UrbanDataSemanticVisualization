@@ -70,7 +70,6 @@ export class SparqlEndpointResponseProvider extends EventSender {
     };
     for(var key in jsonData) {    
       var item = jsonData[key];
-      //  console.log('item', this.tokenizeURI(item.predicate.value).id);
       jsonEditedResult[this.tokenizeURI(item.predicate.value).id] = item.object.value;
     }
     return jsonEditedResult;
@@ -159,10 +158,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
       ],
       legend: undefined,
     };
-    console.log('respons from sparqlEndpointService: ',this.response);
-    console.log('namespaces: ',this.namespaces);
     for (let triple of this.response.results.bindings) {
-      console.log('triple: ', triple);
       if (
         graphData.nodes.find((n) => n.id == triple.subject.value) == undefined
       ) {
@@ -170,7 +166,6 @@ export class SparqlEndpointResponseProvider extends EventSender {
           triple.subjectType.value
         );
         let node = { id: triple.subject.value, namespace: subjectNamespaceId };
-        console.log('add subject: ', node);
         graphData.nodes.push(node);
       }
       if (
@@ -178,7 +173,6 @@ export class SparqlEndpointResponseProvider extends EventSender {
       ) {
         let objectNamespaceId = this.getNamespaceIndex(triple.objectType.value);
         let node = { id: triple.object.value, namespace: objectNamespaceId };
-        console.log('add object: ', node);
         graphData.nodes.push(node);
       }
       let link = {
