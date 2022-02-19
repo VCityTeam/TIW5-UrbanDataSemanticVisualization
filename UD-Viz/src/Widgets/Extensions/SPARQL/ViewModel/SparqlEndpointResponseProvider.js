@@ -56,7 +56,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
 
     await this.sendEvent(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
-      this.getResponseDataAsGraph()
+      await  this.getResponseDataAsGraph()
     );
 
   }
@@ -102,6 +102,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
         );
         let node = { id: triple.subject.value, namespace: subjectNamespaceId };
         graphData.nodes.push(node);
+
       }
       if (
         graphData.nodes.find((n) => n.id == triple.object.value) == undefined
@@ -120,6 +121,14 @@ export class SparqlEndpointResponseProvider extends EventSender {
     graphData.legend = this.namespaces;
     return graphData;
   }
+  /**
+   * building details
+   * @param {*} query
+   */
+  async querySparqlEndPointBuildingData(query){
+    this.response= await this.service.querySparqlEndpoint(query);
+    return  this.response.results.bindings;
+  }
 
   /**
    * 
@@ -132,7 +141,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
       this.getResponseDataBatimentAsGraph(this.response.results.bindings)
     );
   }
-  ///////////////////////////////////////////////////////////////////:mes modifs
+
   async querySparqlEndpointServiceJsonData(query) {
     this.response = await this.service.querySparqlEndpoint(query);
     await this.sendEvent(
@@ -141,13 +150,42 @@ export class SparqlEndpointResponseProvider extends EventSender {
     );
   }
 
-  ////////////////////////////////////////: Mes mofids
+
+  /**
+   * return  a builginG id
+   * @return {String}
+   */
+  getBuildingID(url){
+    var id=this.tokenizeURI(url).id;
+    return id;
+  }
+
+  /**
+   * return  details for a building
+   * @return {Array}
+   */
+  async  getBuildingDetails(buildingId){
+    let tabDetails=[];
+    var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
+          SELECT * 
+          WHERE {?subject ?predicate ?object . 
+          FILTER((?subject = mydata:${buildingId}))
+          }`;
+    var results= await this.querySparqlEndPointBuildingData(semantic_data_query);
+    var json=JSON.stringify(results);
+    var valuesRenvoyees=JSON.parse(json);
+    for(var i=0;i<Object.keys(valuesRenvoyees).length;i++){
+      tabDetails.push(valuesRenvoyees[i].object.value);
+      console.log(valuesRenvoyees[i].object.value);
+    }
+    return tabDetails;
+  }
  
   /**
    * return the most recently cached query response formatted for a D3.js graph.
    * @return {Object}
    */
-  getResponseDataAsGraph() {
+  async  getResponseDataAsGraph() {
     let graphData = {
       nodes: [
         // { id: 'x', namespace: 1 },
@@ -158,15 +196,30 @@ export class SparqlEndpointResponseProvider extends EventSender {
       ],
       legend: undefined,
     };
+
     for (let triple of this.response.results.bindings) {
+      //ici qu'on doit modifier
+      let buildingDetails=[];
+      let buildingUrl=triple.object.value;
+      let buildingId=this.getBuildingID(buildingUrl);
+      buildingDetails=await this.getBuildingDetails(buildingId);
+
+      for(var i=0; i<buildingDetails.length;i++){
+        let node={ id: buildingDetails[i], namespace: 12345 };
+        graphData.nodes.push(node);
+      }
+
       if (
         graphData.nodes.find((n) => n.id == triple.subject.value) == undefined
       ) {
         let subjectNamespaceId = this.getNamespaceIndex(
           triple.subjectType.value
         );
+
         let node = { id: triple.subject.value, namespace: subjectNamespaceId };
         graphData.nodes.push(node);
+
+
       }
       if (
         graphData.nodes.find((n) => n.id == triple.object.value) == undefined
@@ -180,6 +233,14 @@ export class SparqlEndpointResponseProvider extends EventSender {
         target: triple.object.value,
         label: triple.predicate.value,
       };
+      for(var i=0; i<buildingDetails.length;i++){
+        let link = {
+          source: buildingDetails[i],
+          target: triple.object.value,
+          label: triple.predicate.value,
+        };
+        graphData.links.push(link);
+      }
       graphData.links.push(link);
     }
     graphData.legend = this.namespaces;
@@ -243,5 +304,9 @@ export class SparqlEndpointResponseProvider extends EventSender {
   // Mes ajouts
   static get EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA() {
     return 'EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA';
+  }
+
+  static get EVENT_BUILDING_DETAILS(){
+    return 'EVENT_BUILDING_DETAILS';
   }
 }

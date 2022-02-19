@@ -122,6 +122,7 @@ WHERE {
       this.semanticDataView.hidden=false;
       var idBatiment= this.sparqlProvider.tokenizeURI(uri).id; //get id of selected building
       //Get building informations based on id
+      console.log('iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiid dans la requete '+idBatiment);
       var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
     SELECT * 
     WHERE {?subject ?predicate ?object . 
@@ -148,33 +149,33 @@ WHERE {
    * @returns
    */
   dataAsTable(data, columns) {
-    var table = d3.select('body').append('table')
-    var thead = table.append('thead')
+    var table = d3.select('body').append('table');
+    var thead = table.append('thead');
     var tbody = table.append('tbody');
 
     // append the header row
     thead.append('tr')
-        .selectAll('th')
-        .data(columns).enter()
-        .append('th')
-        .text(function (column) { return column; });
+      .selectAll('th')
+      .data(columns).enter()
+      .append('th')
+      .text(function (column) { return column; });
 
     // create a row for each object in the data
     var rows = tbody.selectAll('tr')
-        .data(data)
-        .enter()
-        .append('tr');
+      .data(data)
+      .enter()
+      .append('tr');
 
     // create a cell in each row for each column
     var cells = rows.selectAll('td')
-        .data(function (row) {
-          return columns.map(function (column) {
-            return {column: column, value: row[column]};
-          });
-        })
-        .enter()
-        .append('td')
-        .text(function (d) { return d.value; });
+      .data(function (row) {
+        return columns.map(function (column) {
+          return {column: column, value: row[column]};
+        });
+      })
+      .enter()
+      .append('td')
+      .text(function (d) { return d.value; });
 
     return table;
   }
@@ -189,28 +190,30 @@ WHERE {
       case 'graph':
         // this.hideJsonWindow();
         // this.showGraphWindow();
-        this.dataView.innerHTML="";
+        this.dataView.innerHTML='';
         this.graph.update(data);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.append(this.graph.data);
+        var  jsonData=JSON.stringify(data, undefined, 2);
+        console.log(jsonData);
         break;
       case 'json':
         // this.hideGraphWindow();
         // this.showJsonWindow();
-        var  jsonData=JSON.stringify(data, undefined, 2);
+        var  json=JSON.stringify(data, undefined, 2);
         this.dataView.style['visibility'] = 'visible';
-        this.dataView.innerHTML="";
+        this.dataView.innerHTML='';
         this.dataView.append(jsonData);
-        console.log(jsonData);
+        // console.log(jsonData);
         break;
       case 'table':
-        this.dataView.innerHTML="";
-        var jsonData=JSON.stringify(data,undefined, 2);
+        this.dataView.innerHTML='';
+        //  var jsonData=JSON.stringify(data,undefined, 2);
         this.dataView.style['visibility'] = 'visible';
         let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
         this.dataView.append(result._parents[0].getElementsByTagName('table')[0]);
-        this.dataView.querySelector("table").style['border']='1px solid white';
-        this.dataView.querySelector("table").style['width']='100%';
+        this.dataView.querySelector('table').style['border']='1px solid white';
+        this.dataView.querySelector('table').style['width']='100%';
         var sheet = window.document.styleSheets[0];
         sheet.insertRule('thead { color: #90EE90; margin:auto; }', sheet.cssRules.length);
 
@@ -236,7 +239,7 @@ WHERE {
 
   // SPARQL Window getters //
   get innerContentHtml() {
-    return /*html*/ `
+    return /*html*/ `EVENT_BUILDING_DETAILS
       <form id=${this.formId}>
         <label for="${this.queryTextAreaId}">Query:</label></br>
         <textarea id="${this.queryTextAreaId}" rows="10">${this.default_query}</textarea></br>

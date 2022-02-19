@@ -31,7 +31,7 @@ export class BuildingGraph {
   update(data) {
     this.clear();
     var jsonData = JSON.stringify(data, undefined, 2);
-    console.log(jsonData);
+      console.log('DONNEEES D UN BATIMENT'+jsonData);
     const links = data.links.map((d) => Object.create(d));
     const nodes = data.nodes.map((d) => Object.create(d));
     const namespaces = data.legend;
