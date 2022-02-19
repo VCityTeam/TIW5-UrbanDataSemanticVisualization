@@ -276,6 +276,17 @@ WHERE {
     }
    
   }
+  /**
+   * Update the window to show semantic data of given node
+   * @param {*} data  SPARQL query response data
+   */
+
+  updateSemanticDataView(data) {
+    this.building.update(data);
+    this.semanticDataView.style['visibility'] = 'visible';
+    this.semanticDataView.innerHTML='';
+    this.semanticDataView.append(this.building.data);
+  }
 
   // SPARQL Window getters //
   get innerContentHtml() {
@@ -292,9 +303,50 @@ WHERE {
         <option value="json">Json</option>
         <option value="timeline">Timeline</option>
       </select>
-      <div id="${this.dataViewId}"/>`;
+      <div id="${this.dataViewId}"></div>
+      <div id="${this.semanticDataViewId}"></div>
+      <div id="${this.jsonDataViewId}"></div>
+      
+      `;
   }
 
+  hideGraphWindow(){
+    document.getElementById(this.dataViewId).style.display='none';
+    document.getElementById(this.semanticDataViewId).style.display='none';
+  }
+
+  hideJsonWindow(){
+    document.getElementById(this.jsonDataViewId).style.display='none';
+  }
+
+  showGraphWindow(){
+    document.getElementById(this.dataViewId).style.display='block';
+    document.getElementById(this.semanticDataViewId).style.display='block';
+  }
+
+  showJsonWindow(){
+    document.getElementById(this.jsonDataViewId).style.display='block';
+  }
+
+  get jsonDataViewId(){
+    return `${this.windowId}_json_data_view`;
+
+  }
+
+  get jsonDataView() {
+    return document.getElementById(this.jsonDataViewId);
+  }
+
+  get semanticDataViewId() {
+    return `${this.windowId}_semantic_data_view`;
+  }
+
+
+
+  get semanticDataView() {
+    return document.getElementById(this.semanticDataViewId);
+  }
+  
   get dataViewId() {
     return `${this.windowId}_data_view`;
   }
@@ -339,22 +391,6 @@ WHERE {
   }
   set idBatiment(val) {
     this.idBatiment=val;
-  }
-
-  get filterSelectId() {
-    return `${this.windowId}_filter_select`;
-  }
-
-  get filterSelect() {
-    return document.getElementById(this.filterSelectId);
-  }
-
-  get filterInputId() {
-    return `${this.windowId}_filter_input`;
-  }
-
-  get filterInput() {
-    return document.getElementById(this.filterInputId);
   }
 
   static get EVENT_NODE_SELECTED() {
