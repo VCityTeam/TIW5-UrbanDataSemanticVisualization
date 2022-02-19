@@ -176,7 +176,6 @@ export class SparqlEndpointResponseProvider extends EventSender {
     var valuesRenvoyees=JSON.parse(json);
     for(var i=0;i<Object.keys(valuesRenvoyees).length;i++){
       tabDetails.push(valuesRenvoyees[i].object.value);
-      console.log(valuesRenvoyees[i].object.value);
     }
     return tabDetails;
   }
@@ -198,7 +197,6 @@ export class SparqlEndpointResponseProvider extends EventSender {
     };
 
     for (let triple of this.response.results.bindings) {
-      //ici qu'on doit modifier
       let buildingDetails=[];
       let buildingUrl=triple.object.value;
       let buildingId=this.getBuildingID(buildingUrl);
@@ -290,8 +288,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
     return this.namespaces.findIndex((d) => d == namespace);
   }
 
-  ////////////
-  ///// EVENTS
+
 
   static get EVENT_ENDPOINT_RESPONSE_UPDATED() {
     return 'EVENT_ENDPOINT_RESPONSE_UPDATED';

@@ -195,7 +195,6 @@ WHERE {
         this.dataView.style['visibility'] = 'visible';
         this.dataView.append(this.graph.data);
         var  jsonData=JSON.stringify(data, undefined, 2);
-        console.log(jsonData);
         break;
       case 'json':
         // this.hideGraphWindow();
