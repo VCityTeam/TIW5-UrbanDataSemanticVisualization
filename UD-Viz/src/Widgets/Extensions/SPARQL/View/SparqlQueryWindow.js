@@ -6,6 +6,7 @@ import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvi
 import './SparqlQueryWindow.css';
 import { BuildingGraph } from './BuildingGraph';
 import { JsonView } from './JsonView';
+import * as renderjson from './JsonRender';
 import * as d3 from 'd3';
 
 /**
@@ -148,33 +149,67 @@ WHERE {
    * @returns
    */
   dataAsTable(data, columns) {
+    var sortAscending = true;
     var table = d3.select('body').append('table')
     var thead = table.append('thead')
     var tbody = table.append('tbody');
 
     // append the header row
-    thead.append('tr')
+    var headers = thead.append('tr')
         .selectAll('th')
         .data(columns).enter()
         .append('th')
-        .text(function (column) { return column; });
+        .text(function (column) { return column; })
+        .on('click', function (d) {
+          headers.attr('class', 'header');
+
+          if (sortAscending) {
+            console.log("sort ascending");
+            console.log("rows: ",rows._groups[0][0].__data__.id);
+            rows._groups[0].sort(function(a, b) {
+              console.log("column: ",d.srcElement.__data__);
+              console.log(a.__data__[d.srcElement.__data__]);
+              return d3.ascending(b.__data__[d.srcElement.__data__], a.__data__[d.srcElement.__data__]);
+            });
+            sortAscending = false;
+            console.log(rows);
+            this.className = 'aes';
+            } 
+        else {
+            console.log("sort descending");
+            rows.sort(function(a, b) {
+              console.log("column: ",d.srcElement.__data__);
+              console.log(b.__data__[d.srcElement.__data__]);
+              return d3.descending(b[d], a[d]); 
+            });
+            sortAscending = true;
+            this.className = 'des';
+            }
+
+      });
 
     // create a row for each object in the data
-    var rows = tbody.selectAll('tr')
-        .data(data)
-        .enter()
-        .append('tr');
+    var rows = table.append('tbody').selectAll('tr')
+                   .data(data).enter()
+                   .append('tr');
 
     // create a cell in each row for each column
-    var cells = rows.selectAll('td')
-        .data(function (row) {
-          return columns.map(function (column) {
-            return {column: column, value: row[column]};
-          });
-        })
-        .enter()
+    var rows = table.append('tbody').selectAll('tr')
+                   .data(data).enter()
+                   .append('tr');
+      rows.selectAll('td')
+        .data(function (d) {
+            return columns.map(function (k) {
+                return { 'value': d[k], 'name': k};
+            });
+        }).enter()
         .append('td')
-        .text(function (d) { return d.value; });
+        .attr('data-th', function (d) {
+            return d.name;
+        })
+        .text(function (d) {
+            return d.value;
+        });
 
     return table;
   }
@@ -197,27 +232,39 @@ WHERE {
       case 'json':
         // this.hideGraphWindow();
         // this.showJsonWindow();
-        var  jsonData=JSON.stringify(data, undefined, 2);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.innerHTML="";
-        this.dataView.append(jsonData);
-        console.log(jsonData);
+        this.dataView.append(renderjson//.set_show_by_default(true)
+          //.set_max_string_length(1)
+          //.set_max_string_length(5)
+          .set_icons('+', '-')
+          .set_max_string_length(40)
+          (data));
+        console.log(data);
         break;
       case 'table':
         this.dataView.innerHTML="";
-        var jsonData=JSON.stringify(data,undefined, 2);
+        var select = document.createElement('div');
+        select.innerHTML = `
+          <label>Select filter:</label>
+          <select id="${this.filterSelectId}">
+            <option value="id">Id </option>
+            <option value="namespace">Namespace</option>
+          </select>
+        `;
+        this.dataView.appendChild(select);
         this.dataView.style['visibility'] = 'visible';
         let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
-        this.dataView.append(result._parents[0].getElementsByTagName('table')[0]);
+        this.dataView.appendChild(result._parents[0].getElementsByTagName('table')[0]);
         this.dataView.querySelector("table").style['border']='1px solid white';
         this.dataView.querySelector("table").style['width']='100%';
         var sheet = window.document.styleSheets[0];
-        sheet.insertRule('thead { color: #90EE90; margin:auto; }', sheet.cssRules.length);
-
-        sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
+        sheet.insertRule('thead { color: #90EE90; margin:auto; border: 1px solid white !important;}', sheet.cssRules.length);
+        sheet.insertRule('tr {border: 1px solid white !important; }', sheet.cssRules.length);
+        sheet.insertRule('td {border: 1px solid white !important; }', sheet.cssRules.length);
         break;
       default:
-        console.log('ce format est pas disponible');
+        console.log('ce format n\'est pas disponible');
 
     }
    
@@ -311,6 +358,10 @@ WHERE {
 
   get resultSelectId() {
     return `${this.windowId}_resultSelect`;
+  }
+
+  get filterSelectId() {
+    return `${this.windowId}_filterSelect`;
   }
 
   get resultSelect() {
