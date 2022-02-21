@@ -123,6 +123,7 @@ export class Window extends ModuleView {
       let windowDiv = document.createElement('div');
       windowDiv.innerHTML = this.html;
       windowDiv.id = this.windowId;
+      console.log(htmlElement);
       htmlElement.appendChild(windowDiv);
       if (this.defaultStyle) {
         windowDiv.className = 'window';
@@ -217,6 +218,9 @@ export class Window extends ModuleView {
     if (this.isCreated) {
       extension.appendTo(this.window);
     }
+  }
+  showWindow() {
+    this.window.show();
   }
 
   /**

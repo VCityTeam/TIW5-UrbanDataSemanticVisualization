@@ -78,6 +78,7 @@ export class CityObjectProvider extends EventSender {
     this.registerEvent(CityObjectProvider.EVENT_CITY_OBJECT_SELECTED);
     this.registerEvent(CityObjectProvider.EVENT_CITY_OBJECT_UNSELECTED);
     this.registerEvent(CityObjectProvider.EVENT_CITY_OBJECT_CHANGED);
+    
   }
 
   ///////////////////////////

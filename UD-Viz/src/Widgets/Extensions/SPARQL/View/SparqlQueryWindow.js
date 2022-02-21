@@ -4,8 +4,8 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
+import { JsonView } from './JsonView';
 import * as d3 from 'd3';
-
 
 /**
  * The SPARQL query window class which provides the user interface for querying
@@ -17,7 +17,9 @@ export class SparqlQueryWindow extends Window {
    * @param {SparqlEndpointResponseProvider} sparqlProvider The SPARQL Endpoint Response Provider
    * @param {ExtendedCityObjectProvider} cityObjectProvider The City Object Provider
    * @param {LayerManager} layerManager The UD-Viz LayerManager.
+   * 
    */
+ 
   constructor(sparqlProvider, cityObjectProvider, layerManager) {
     super('sparqlQueryWindow', 'SPARQL Query');
 
@@ -48,6 +50,15 @@ export class SparqlQueryWindow extends Window {
      * @type {Graph}
      */
     this.graph = new Graph(this);
+
+
+
+    /**
+     * Contains the D3 Json View
+     *
+     * @type {Graph}
+     */
+    this.jsonView=new JsonView(this);
 
     /**
      * The initial SPARQL query to display upon window initialization.
@@ -88,23 +99,57 @@ WHERE {
    * the window is actually usable ; service event listerers are set here.
    * @param {SparqlEndpointService} service The SPARQL endpoint service.
    */
-  windowCreated() {
+  windowCreated() 
+  {
     this.form.onsubmit = () => {
       this.sparqlProvider.querySparqlEndpointService(this.queryTextArea.value);
       return false;
     };
-
+  
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
       (data) => this.updateDataView(data, document.getElementById(this.resultSelectId).value)
     );
 
-    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) =>
-      this.cityObjectProvider.selectCityObjectByBatchTable(
-        'gml_id',
-        this.sparqlProvider.tokenizeURI(uri).id
-      )
-    );
+  }
+
+  /**
+   * Transform js array to html table using d3 library
+   *
+   * @param {Object[]} data
+   * @param {string[]} columns
+   * @returns
+   */
+  dataAsTable(data, columns) {
+    var table = d3.select('body').append('table');
+    var thead = table.append('thead');
+    var tbody = table.append('tbody');
+
+    // append the header row
+    thead.append('tr')
+      .selectAll('th')
+      .data(columns).enter()
+      .append('th')
+      .text(function (column) { return column; });
+
+    // create a row for each object in the data
+    var rows = tbody.selectAll('tr')
+      .data(data)
+      .enter()
+      .append('tr');
+
+    // create a cell in each row for each column
+    var cells = rows.selectAll('td')
+      .data(function (row) {
+        return columns.map(function (column) {
+          return {column: column, value: row[column]};
+        });
+      })
+      .enter()
+      .append('td')
+      .text(function (d) { return d.value; });
+
+    return table;
   }
   dataAsTable(data, columns){
           var table = d3.select('body').append('table')
@@ -146,34 +191,39 @@ WHERE {
   updateDataView(data, viewType) {
     switch(viewType){
       case 'graph':
+        // this.hideJsonWindow();
+        // this.showGraphWindow();
+        this.dataView.innerHTML='';
         this.graph.update(data);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.innerHTML=""
         this.dataView.append(this.graph.data);
+        var  jsonData=JSON.stringify(data, undefined, 2);
         break;
       case 'json':
-        var jsonData=JSON.stringify(data,null, "\t");
+        // this.hideGraphWindow();
+        // this.showJsonWindow();
+        var  json=JSON.stringify(data, undefined, 2);
         this.dataView.style['visibility'] = 'visible';
-        this.dataView.innerHTML=""
+        this.dataView.innerHTML='';
         this.dataView.append(jsonData);
-        //console.log(jsonData);
+        // console.log(jsonData);
         break;
       case 'table':
-        var jsonData=JSON.stringify(data,undefined, 2);
-        this.dataView.innerHTML="";
+        this.dataView.innerHTML='';
+        //  var jsonData=JSON.stringify(data,undefined, 2);
         this.dataView.style['visibility'] = 'visible';
         let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
         this.dataView.append(result._parents[0].getElementsByTagName('table')[0]);
-        this.dataView.querySelector("table").style['border']='1px solid white';
-        this.dataView.querySelector("table").style['width']='100%';
+        this.dataView.querySelector('table').style['border']='1px solid white';
+        this.dataView.querySelector('table').style['width']='100%';
         var sheet = window.document.styleSheets[0];
         sheet.insertRule('thead { color: #90EE90; margin:auto; }', sheet.cssRules.length);
-        sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
 
-        console.log(data["nodes"]);
+        sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
         break;
       default:
-        console.log("ce format est pas disponible");
+        console.log('ce format est pas disponible');
 
     }
    
@@ -181,7 +231,7 @@ WHERE {
 
   // SPARQL Window getters //
   get innerContentHtml() {
-    return /*html*/ `
+    return /*html*/ `EVENT_BUILDING_DETAILS
       <form id=${this.formId}>
         <label for="${this.queryTextAreaId}">Query:</label></br>
         <textarea id="${this.queryTextAreaId}" rows="10">${this.default_query}</textarea></br>
@@ -191,12 +241,53 @@ WHERE {
       <select id="${this.resultSelectId}">
         <option value="graph">Graph</option>
         <option value="table">Table</option>
-        <option value="json">JSON</option>
+        <option value="json">Json</option>
         <option value="timeline">Timeline</option>
       </select>
-      <div id="${this.dataViewId}"/>`;
+      <div id="${this.dataViewId}"></div>
+      <div id="${this.semanticDataViewId}"></div>
+      <div id="${this.jsonDataViewId}"></div>
+      
+      `;
   }
 
+  hideGraphWindow(){
+    document.getElementById(this.dataViewId).style.display='none';
+    document.getElementById(this.semanticDataViewId).style.display='none';
+  }
+
+  hideJsonWindow(){
+    document.getElementById(this.jsonDataViewId).style.display='none';
+  }
+
+  showGraphWindow(){
+    document.getElementById(this.dataViewId).style.display='block';
+    document.getElementById(this.semanticDataViewId).style.display='block';
+  }
+
+  showJsonWindow(){
+    document.getElementById(this.jsonDataViewId).style.display='block';
+  }
+
+  get jsonDataViewId(){
+    return `${this.windowId}_json_data_view`;
+
+  }
+
+  get jsonDataView() {
+    return document.getElementById(this.jsonDataViewId);
+  }
+
+  get semanticDataViewId() {
+    return `${this.windowId}_semantic_data_view`;
+  }
+
+
+
+  get semanticDataView() {
+    return document.getElementById(this.semanticDataViewId);
+  }
+  
   get dataViewId() {
     return `${this.windowId}_data_view`;
   }
@@ -235,6 +326,12 @@ WHERE {
 
   get queryTextArea() {
     return document.getElementById(this.queryTextAreaId);
+  }
+  get idBatiment(){
+    return this.idBatiment;
+  }
+  set idBatiment(val) {
+    this.idBatiment=val;
   }
 
   static get EVENT_NODE_SELECTED() {

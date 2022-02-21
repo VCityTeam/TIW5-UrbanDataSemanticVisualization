@@ -39,6 +39,12 @@ export class SparqlEndpointResponseProvider extends EventSender {
     this.registerEvent(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED
     );
+
+    this.registerEventSemanticData(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA
+    );
+
+    this.registerEventJsonData( SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA);
   }
 
   /**
@@ -50,15 +56,92 @@ export class SparqlEndpointResponseProvider extends EventSender {
 
     await this.sendEvent(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
-      this.getResponseDataAsGraph()
+      await  this.getResponseDataAsGraph()
+    );
+
+  }
+  /**
+   * 
+   * @param {*} jsonData 
+   * @returns 
+   */
+  getResponseDataAsJson(jsonData){
+    var jsonEditedResult = {
+    };
+    for(var key in jsonData) {    
+      var item = jsonData[key];
+      jsonEditedResult[this.tokenizeURI(item.predicate.value).id] = item.object.value;
+    }
+    return jsonEditedResult;
+  }
+
+
+  /**
+   * building details
+   * @param {*} query
+   */
+  async querySparqlEndPointBuildingData(query){
+    this.response= await this.service.querySparqlEndpoint(query);
+    return  this.response.results.bindings;
+  }
+
+  /**
+   * 
+   * @param {*} query 
+   */
+  async querySparqlEndpointServiceSemanticData(query) {
+    this.response = await this.service.querySparqlEndpoint(query);
+    await this.sendEvent(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
+      this.getResponseDataBatimentAsGraph(this.response.results.bindings)
     );
   }
 
+  async querySparqlEndpointServiceJsonData(query) {
+    this.response = await this.service.querySparqlEndpoint(query);
+    await this.sendEvent(
+      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA,
+      this.getResponseDataAsJson(this.response.results.bindings)
+    );
+  }
+
+
+  /**
+   * return  a building id
+   * @return {String}
+   */
+  getBuildingID(url){
+    var id=this.tokenizeURI(url).id;
+    return id;
+  }
+
+  /**
+   * return  details of a building
+   * @return {Array}
+   */
+  async  getBuildingDetails(buildingId){
+    let tabDetails=[];
+    var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
+          SELECT * 
+          WHERE {?subject ?predicate ?object . 
+          FILTER((?subject = mydata:${buildingId}))
+          }`;
+    var results= await this.querySparqlEndPointBuildingData(semantic_data_query);
+    var json=JSON.stringify(results);
+    var valuesRenvoyees=JSON.parse(json);
+    for(var i=0;i<Object.keys(valuesRenvoyees).length;i++){
+      if(!(valuesRenvoyees[i].object.value.includes('#Building')) && !(valuesRenvoyees[i].object.value.includes('#NamedIndividual')) ){
+        tabDetails.push(valuesRenvoyees[i].object.value);
+      }
+    }
+    return tabDetails;
+  }
+ 
   /**
    * return the most recently cached query response formatted for a D3.js graph.
    * @return {Object}
    */
-  getResponseDataAsGraph() {
+  async  getResponseDataAsGraph() {
     let graphData = {
       nodes: [
         // { id: 'x', namespace: 1 },
@@ -71,18 +154,24 @@ export class SparqlEndpointResponseProvider extends EventSender {
     };
 
     for (let triple of this.response.results.bindings) {
-      if (
-        graphData.nodes.find((n) => n.id == triple.subject.value) == undefined
-      ) {
-        let subjectNamespaceId = this.getNamespaceIndex(
-          triple.subjectType.value
-        );
+      let buildingDetails=[];
+      let buildingUrl=triple.object.value;
+      let buildingId=this.getBuildingID(buildingUrl);
+      buildingDetails=await this.getBuildingDetails(buildingId);
+
+      for(var i=0; i<buildingDetails.length;i++){
+        if(graphData.nodes.find((n)=>n.id==buildingDetails[i])==undefined){
+          let node={ id: buildingDetails[i], namespace:2};
+          graphData.nodes.push(node);
+        }
+      }
+
+      if (graphData.nodes.find((n) => n.id == triple.subject.value) == undefined) {
+        let subjectNamespaceId = this.getNamespaceIndex(triple.subject.value);
         let node = { id: triple.subject.value, namespace: subjectNamespaceId };
         graphData.nodes.push(node);
       }
-      if (
-        graphData.nodes.find((n) => n.id == triple.object.value) == undefined
-      ) {
+      if (graphData.nodes.find((n) => n.id == triple.object.value) == undefined) {
         let objectNamespaceId = this.getNamespaceIndex(triple.objectType.value);
         let node = { id: triple.object.value, namespace: objectNamespaceId };
         graphData.nodes.push(node);
@@ -92,20 +181,21 @@ export class SparqlEndpointResponseProvider extends EventSender {
         target: triple.object.value,
         label: triple.predicate.value,
       };
+      for(var j=0; j<buildingDetails.length;j++){
+        let link = {
+          source: buildingDetails[j],
+          target: triple.object.value,
+          label: triple.predicate.value,
+        };
+        graphData.links.push(link);
+      }
       graphData.links.push(link);
     }
     graphData.legend = this.namespaces;
     return graphData;
   }
 
-  /**
-   * return the most recently cached query response formatted for a table.
-   * @return {Object | undefined}
-   */
-  getResponseDataAsTable() {
-    //TODO: implement me!
-    return undefined;
-  }
+
 
   /**
    * Tokenize a URI into a namespace and id
@@ -141,10 +231,14 @@ export class SparqlEndpointResponseProvider extends EventSender {
     return this.namespaces.findIndex((d) => d == namespace);
   }
 
-  ////////////
-  ///// EVENTS
+
 
   static get EVENT_ENDPOINT_RESPONSE_UPDATED() {
     return 'EVENT_ENDPOINT_RESPONSE_UPDATED';
   }
+
+  static get EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA() {
+    return 'EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA';
+  }
+
 }
