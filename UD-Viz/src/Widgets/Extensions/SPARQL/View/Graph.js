@@ -36,6 +36,7 @@ export class Graph {
     const nodes = data.nodes.map((d) => Object.create(d));
     const namespaces = data.legend;
 
+    
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -69,7 +70,16 @@ export class Graph {
       .data(nodes)
       .join('circle')
       .attr('r', 5)
-      .attr('fill', (d) => colorScale(d.namespace))
+      //.attr('fill', (d) => colorScale(d.namespace))
+      .attr('fill', function (d) { 
+        if(d.id.includes("2017"))
+        return "black";
+        else if(d.id.includes("inconnu"))
+        return "black";
+        else if(d.id.includes("EPSG"))
+        return "black";
+        else return colorScale(d.namespace);
+       })
       .on('click', (d) =>
         this.window.sendEvent(SparqlQueryWindow.EVENT_NODE_SELECTED, d.path[0].textContent)
       )
@@ -83,7 +93,9 @@ export class Graph {
                         .enter()
                         .append("text")
                         .text(function (d) { 
+                          if(d.id.includes("#"))
                           return d.id.split("#")[1];
+                          else return d.id;
                          })
                         .style("text-anchor", "middle")
                         .style("fill", "#555")
@@ -95,13 +107,14 @@ export class Graph {
                           this.window.sendEvent(SparqlQueryWindow.EVENT_NODE_SELECTED, d.path[0].textContent)
                         )
     // *****************************************
-    console.log(links)
     var linkText = this.svg.selectAll(".mylink")
                         .data(links)
                         .enter()
                         .append("text")
                         .text(function (d) { 
-                          return 'Object member'
+                          if(d.label.includes("#"))
+                          return d.label.split("#")[1]
+                          //else return 'Object member'
                          })
                         .style("text-anchor", "middle")
                         .style("fill", "#555")
@@ -144,6 +157,19 @@ export class Graph {
       .style('fill', (d, i) => colorScale(i))
       .append('title')
       .text((d) => d);
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 42)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'black')
+      .append('title')
 
     this.svg
       .append('g')
@@ -153,6 +179,14 @@ export class Graph {
       .attr('x', 24)
       .attr('y', (d, i) => 20 + i * 16)
       .text((d) => d);
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 52)
+      .text('Common data');
   }
 
   /**
