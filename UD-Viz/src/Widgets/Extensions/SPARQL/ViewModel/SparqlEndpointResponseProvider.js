@@ -121,17 +121,29 @@ export class SparqlEndpointResponseProvider extends EventSender {
    */
   async  getBuildingDetails(buildingId){
     let tabDetails=[];
+    // let json={
+    //   'value':'',
+    //   'label':''
+    // };
     var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
           SELECT * 
           WHERE {?subject ?predicate ?object . 
           FILTER((?subject = mydata:${buildingId}))
           }`;
     var results= await this.querySparqlEndPointBuildingData(semantic_data_query);
-    var json=JSON.stringify(results);
-    var valuesRenvoyees=JSON.parse(json);
+    var valuesRenvoyeesJson=JSON.stringify(results);
+    var valuesRenvoyees=JSON.parse(valuesRenvoyeesJson);
     for(var i=0;i<Object.keys(valuesRenvoyees).length;i++){
       if(!(valuesRenvoyees[i].object.value.includes('#Building')) && !(valuesRenvoyees[i].object.value.includes('#NamedIndividual')) ){
-        tabDetails.push(valuesRenvoyees[i].object.value);
+        //tabDetails.push(valuesRenvoyees[i].object.value);
+        // json.value=valuesRenvoyees[i].object.value;
+        // json.label=valuesRenvoyees[i].object.label;
+        let json = {
+          value: valuesRenvoyees[i].object.value,
+          label: valuesRenvoyees[i].predicate.value,
+        };
+        tabDetails.push(json);
+        console.log('valeur tableau'+tabDetails[0].label);
       }
     }
     return tabDetails;
@@ -159,9 +171,10 @@ export class SparqlEndpointResponseProvider extends EventSender {
       let buildingId=this.getBuildingID(buildingUrl);
       buildingDetails=await this.getBuildingDetails(buildingId);
 
+      console.log('valeur de buildings details'+buildingDetails[0].value+''+buildingDetails[0].label);
       for(var i=0; i<buildingDetails.length;i++){
-        if(graphData.nodes.find((n)=>n.id==buildingDetails[i])==undefined){
-          let node={ id: buildingDetails[i], namespace:2};
+        if(graphData.nodes.find((n)=>n.id==buildingDetails[i].value)==undefined){
+          let node={ id: buildingDetails[i].value, namespace:2};
           graphData.nodes.push(node);
         }
       }
@@ -183,9 +196,9 @@ export class SparqlEndpointResponseProvider extends EventSender {
       };
       for(var j=0; j<buildingDetails.length;j++){
         let link = {
-          source: buildingDetails[j],
+          source: buildingDetails[j].value,
           target: triple.object.value,
-          label: triple.predicate.value,
+          label: buildingDetails[j].label,
         };
         graphData.links.push(link);
       }
