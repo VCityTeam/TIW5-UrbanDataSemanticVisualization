@@ -4,7 +4,6 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
-import { BuildingGraph } from './BuildingGraph';
 import { JsonView } from './JsonView';
 import * as d3 from 'd3';
 
@@ -53,12 +52,6 @@ export class SparqlQueryWindow extends Window {
     this.graph = new Graph(this);
 
 
-    /**
-     * Contains the D3 graph view to display building
-     *
-     * @type {Graph}
-     */
-    this.building=new BuildingGraph(this);
 
     /**
      * Contains the D3 Json View
@@ -118,27 +111,6 @@ WHERE {
       (data) => this.updateDataView(data, document.getElementById(this.resultSelectId).value)
     );
 
-    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) => {
-      this.semanticDataView.hidden=false;
-      var idBatiment= this.sparqlProvider.tokenizeURI(uri).id; //get id of selected building
-      //Get building informations based on id
-      console.log('iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiid dans la requete '+idBatiment);
-      var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
-    SELECT * 
-    WHERE {?subject ?predicate ?object . 
-    FILTER((?subject = mydata:${idBatiment}))
-    }`;
-      this.sparqlProvider.querySparqlEndpointServiceSemanticData(semantic_data_query);
-      return this.cityObjectProvider.selectCityObjectByBatchTable(
-        'gml_id',
-        this.sparqlProvider.tokenizeURI(uri).id
-      );
-    }
-    );
-    this.sparqlProvider.addEventListener(
-      SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
-      (data) => this.updateSemanticDataView(data)
-    );
   }
 
   /**
@@ -223,17 +195,6 @@ WHERE {
 
     }
    
-  }
-  /**
-   * Update the window to show semantic data of given node
-   * @param {*} data  SPARQL query response data
-   */
-
-  updateSemanticDataView(data) {
-    this.building.update(data);
-    this.semanticDataView.style['visibility'] = 'visible';
-    this.semanticDataView.innerHTML='';
-    this.semanticDataView.append(this.building.data);
   }
 
   // SPARQL Window getters //
