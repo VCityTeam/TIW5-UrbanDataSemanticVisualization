@@ -95,6 +95,7 @@ export class Graph {
                           this.window.sendEvent(SparqlQueryWindow.EVENT_NODE_SELECTED, d.path[0].textContent)
                         )
     // *****************************************
+    console.log(links)
     var linkText = this.svg.selectAll(".mylink")
                         .data(links)
                         .enter()
