@@ -4,6 +4,8 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
+import * as d3 from 'd3';
+
 
 /**
  * The SPARQL query window class which provides the user interface for querying
@@ -104,6 +106,37 @@ WHERE {
       )
     );
   }
+  dataAsTable(data, columns){
+          var table = d3.select('body').append('table')
+          var thead = table.append('thead')
+          var tbody = table.append('tbody');
+        
+          // append the header row
+          thead.append('tr')
+            .selectAll('th')
+            .data(columns).enter()
+            .append('th')
+              .text(function (column) { return column; });
+        
+          // create a row for each object in the data
+          var rows = tbody.selectAll('tr')
+            .data(data)
+            .enter()
+            .append('tr');
+        
+          // create a cell in each row for each column
+          var cells = rows.selectAll('td')
+            .data(function (row) {
+              return columns.map(function (column) {
+                return {column: column, value: row[column]};
+              });
+            })
+            .enter()
+            .append('td')
+              .text(function (d) { return d.value; });
+        
+          return table;
+  }
 
   /**
    * Update the window.
@@ -115,12 +148,29 @@ WHERE {
       case 'graph':
         this.graph.update(data);
         this.dataView.style['visibility'] = 'visible';
+        this.dataView.innerHTML=""
         this.dataView.append(this.graph.data);
         break;
       case 'json':
-        var  jsonData=JSON.stringify(data, undefined, 2);
-       // this.dataView.append(jsonData);
-        console.log(jsonData);
+        var jsonData=JSON.stringify(data,null, "\t");
+        this.dataView.style['visibility'] = 'visible';
+        this.dataView.innerHTML=""
+        this.dataView.append(jsonData);
+        //console.log(jsonData);
+        break;
+      case 'table':
+        var jsonData=JSON.stringify(data,undefined, 2);
+        this.dataView.innerHTML="";
+        this.dataView.style['visibility'] = 'visible';
+        let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
+        this.dataView.append(result._parents[0].getElementsByTagName('table')[0]);
+        this.dataView.querySelector("table").style['border']='1px solid white';
+        this.dataView.querySelector("table").style['width']='100%';
+        var sheet = window.document.styleSheets[0];
+        sheet.insertRule('thead { color: #90EE90; margin:auto; }', sheet.cssRules.length);
+        sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
+
+        console.log(data["nodes"]);
         break;
       default:
         console.log("ce format est pas disponible");

@@ -15,6 +15,7 @@ export class Graph {
     this.window = window;
     this.height = height;
     this.width = width;
+    
 
     this.svg = d3
       .create('svg')
@@ -46,7 +47,8 @@ export class Graph {
 
     const zoom = d3.zoom().on('zoom', this.handleZoom);
 
-    this.svg.call(zoom);
+    this.svg.call(zoom)
+    
 
     const link = this.svg
       .append('g')
@@ -74,14 +76,55 @@ export class Graph {
       .call(this.drag(simulation));
 
     node.append('title').text((d) => d.id);
-
+    // Test sur les noeuds v
+    
+    var label = this.svg.selectAll(".mytext")
+                        .data(nodes)
+                        .enter()
+                        .append("text")
+                        .text(function (d) { 
+                          return d.id.split("#")[1];
+                         })
+                        .style("text-anchor", "middle")
+                        .style("fill", "#555")
+                        .style("font-family", "Arial")
+                        .style("font-size", 10)
+                        .attr("class","myclass")
+                        .call(this.drag(simulation))
+                        .on('click', (d) =>
+                          this.window.sendEvent(SparqlQueryWindow.EVENT_NODE_SELECTED, d.path[0].textContent)
+                        )
+    // *****************************************
+    var linkText = this.svg.selectAll(".mylink")
+                        .data(links)
+                        .enter()
+                        .append("text")
+                        .text(function (d) { 
+                          return 'Object member'
+                         })
+                        .style("text-anchor", "middle")
+                        .style("fill", "#555")
+                        .style("font-family", "Arial")
+                        .style("font-size", 10)
+                        .attr("class","myclass")
+                        .call(this.drag(simulation))
+    //******************************************/
     simulation.on('tick', () => {
+      label
+        .attr("x", function(d){ return d.x; })
+        .attr("y", function (d) {return d.y - 10; });
       link
         .attr('x1', (d) => d.source.x)
         .attr('y1', (d) => d.source.y)
         .attr('x2', (d) => d.target.x)
         .attr('y2', (d) => d.target.y);
-
+      linkText
+        .attr("x", function(d) {
+            return ((d.source.x + d.target.x)/2);
+        })
+        .attr("y", function(d) {
+            return ((d.source.y + d.target.y)/2);
+        });
       node.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
     });
 
@@ -169,7 +212,16 @@ export class Graph {
   handleZoom(event) {
     d3.selectAll('svg g')
       .filter((d, i) => i < 2)
-      .attr('transform', event.transform);
+      //.attr('transform', event.transform)
+      .attr("height","100%")
+      .attr("width","100%")
+      .attr("transform",
+      "translate(" + event.transform.x + "," + event.transform.y + ") scale(" + event.transform.k + ")")
+        window.console && console.log("here", event.transform.x,event.transform.k,event);
+      d3.selectAll("text.myclass").style("font-size", (10/event.transform.k) + "px")
+      .attr("transform",
+      "translate(" + event.transform.x + "," + event.transform.y + ") scale(" + event.transform.k + ")")
+        window.console && console.log("here", event.transform.x,event.transform.k,event);
   }
 
   /**

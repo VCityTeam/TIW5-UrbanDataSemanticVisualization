@@ -15,9 +15,13 @@
   width: 100%;
   padding-top: 3px;
   visibility: hidden;
+  overflow: scroll;
+  height: 300px;
+  
 }
 
 .d3_graph {
   width: 100%;
   background-color: rgb(255, 255, 255);
 }
+
