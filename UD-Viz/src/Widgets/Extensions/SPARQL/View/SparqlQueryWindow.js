@@ -4,10 +4,8 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
-import { BuildingGraph } from './BuildingGraph';
-import { JsonView } from './JsonView';
-import * as renderjson from './JsonRender';
 import * as d3 from 'd3';
+
 
 /**
  * The SPARQL query window class which provides the user interface for querying
@@ -19,9 +17,7 @@ export class SparqlQueryWindow extends Window {
    * @param {SparqlEndpointResponseProvider} sparqlProvider The SPARQL Endpoint Response Provider
    * @param {ExtendedCityObjectProvider} cityObjectProvider The City Object Provider
    * @param {LayerManager} layerManager The UD-Viz LayerManager.
-   * 
    */
- 
   constructor(sparqlProvider, cityObjectProvider, layerManager) {
     super('sparqlQueryWindow', 'SPARQL Query');
 
@@ -52,21 +48,6 @@ export class SparqlQueryWindow extends Window {
      * @type {Graph}
      */
     this.graph = new Graph(this);
-
-
-    /**
-     * Contains the D3 graph view to display building
-     *
-     * @type {Graph}
-     */
-    this.building=new BuildingGraph(this);
-
-    /**
-     * Contains the D3 Json View
-     *
-     * @type {Graph}
-     */
-    this.jsonView=new JsonView(this);
 
     /**
      * The initial SPARQL query to display upon window initialization.
@@ -107,33 +88,22 @@ WHERE {
    * the window is actually usable ; service event listerers are set here.
    * @param {SparqlEndpointService} service The SPARQL endpoint service.
    */
-  windowCreated() 
-  {
+  windowCreated() {
     this.form.onsubmit = () => {
       this.sparqlProvider.querySparqlEndpointService(this.queryTextArea.value);
       return false;
     };
-  
+
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
       (data) => this.updateDataView(data, document.getElementById(this.resultSelectId).value)
     );
 
-    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) => {
-      this.semanticDataView.hidden=false;
-      var idBatiment= this.sparqlProvider.tokenizeURI(uri).id; //get id of selected building
-      //Get building informations based on id
-      var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
-    SELECT * 
-    WHERE {?subject ?predicate ?object . 
-    FILTER((?subject = mydata:${idBatiment}))
-    }`;
-      this.sparqlProvider.querySparqlEndpointServiceSemanticData(semantic_data_query);
-      return this.cityObjectProvider.selectCityObjectByBatchTable(
+    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) =>
+      this.cityObjectProvider.selectCityObjectByBatchTable(
         'gml_id',
         this.sparqlProvider.tokenizeURI(uri).id
-      );
-    }
+      )
     );
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
@@ -154,10 +124,10 @@ WHERE {
     var thead = table.append('thead');
     var tbody = table.append('tbody');
     var filter = this.filterInput;
-    var filterValue = this.filterInputId.value;   
-    //Add event listener on input field to update table 
+    var filterValue = this.filterInputId.value;
+    //Add event listener on input field to update table
     filter.addEventListener('change', updates);
-    
+
     updates([])
     function updates(e){
       //clear old table
@@ -174,7 +144,7 @@ WHERE {
       //filter data by filtertype
       if (filterValue && filterValue !== ""){
         var dataFilter = data.filter(function(d,i){
-          if ((typeof d[column] === "string"  && d[column].includes(filterValue)) || (typeof d[column] === "number" && d[column] == filterValue)) 
+          if ((typeof d[column] === "string"  && d[column].includes(filterValue)) || (typeof d[column] === "number" && d[column] == filterValue))
           {
             return d;
           };
@@ -191,7 +161,7 @@ WHERE {
       .text(function (column) { return column; })
       .on('click', function (d) {
         headers.attr('class', 'header');
-      
+
         if (sortAscending) {
           //sort tables rows data
           rows._groups[0].sort(function(a, b) {
@@ -203,7 +173,7 @@ WHERE {
           });
           sortAscending = false;
           this.className = 'aes';
-          } 
+          }
         else {
           rows._groups[0].sort(function(a, b) {
             return d3.descending(a.__data__[d.srcElement.__data__], b.__data__[d.srcElement.__data__]);
@@ -213,7 +183,7 @@ WHERE {
           });
           sortAscending = true;
           this.className = 'des';
-        }  
+        }
       });
 
       if (dataFilter.length == 0) {
@@ -249,9 +219,9 @@ WHERE {
               return d.value;
           });
       }
-      
-      
-    }  
+
+
+    }
   }
 
   /**
@@ -306,17 +276,6 @@ WHERE {
     }
    
   }
-  /**
-   * Update the window to show semantic data of given node
-   * @param {*} data  SPARQL query response data
-   */
-
-  updateSemanticDataView(data) {
-    this.building.update(data);
-    this.semanticDataView.style['visibility'] = 'visible';
-    this.semanticDataView.innerHTML='';
-    this.semanticDataView.append(this.building.data);
-  }
 
   // SPARQL Window getters //
   get innerContentHtml() {
@@ -333,50 +292,9 @@ WHERE {
         <option value="json">Json</option>
         <option value="timeline">Timeline</option>
       </select>
-      <div id="${this.dataViewId}"></div>
-      <div id="${this.semanticDataViewId}"></div>
-      <div id="${this.jsonDataViewId}"></div>
-      
-      `;
+      <div id="${this.dataViewId}"/>`;
   }
 
-  hideGraphWindow(){
-    document.getElementById(this.dataViewId).style.display='none';
-    document.getElementById(this.semanticDataViewId).style.display='none';
-  }
-
-  hideJsonWindow(){
-    document.getElementById(this.jsonDataViewId).style.display='none';
-  }
-
-  showGraphWindow(){
-    document.getElementById(this.dataViewId).style.display='block';
-    document.getElementById(this.semanticDataViewId).style.display='block';
-  }
-
-  showJsonWindow(){
-    document.getElementById(this.jsonDataViewId).style.display='block';
-  }
-
-  get jsonDataViewId(){
-    return `${this.windowId}_json_data_view`;
-
-  }
-
-  get jsonDataView() {
-    return document.getElementById(this.jsonDataViewId);
-  }
-
-  get semanticDataViewId() {
-    return `${this.windowId}_semantic_data_view`;
-  }
-
-
-
-  get semanticDataView() {
-    return document.getElementById(this.semanticDataViewId);
-  }
-  
   get dataViewId() {
     return `${this.windowId}_data_view`;
   }
