@@ -4,6 +4,7 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
+import { JsonView } from './JsonView';
 import * as d3 from 'd3';
 
 
@@ -275,17 +276,6 @@ WHERE {
 
     }
    
-  }
-  /**
-   * Update the window to show semantic data of given node
-   * @param {*} data  SPARQL query response data
-   */
-
-  updateSemanticDataView(data) {
-    this.building.update(data);
-    this.semanticDataView.style['visibility'] = 'visible';
-    this.semanticDataView.innerHTML='';
-    this.semanticDataView.append(this.building.data);
   }
 
   // SPARQL Window getters //

@@ -75,52 +75,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
     return jsonEditedResult;
   }
 
-  /**
-   *
-   * @param {*} batimentDetail
-   * @returns
-   */
-  getResponseDataBatimentAsGraph(batimentDetail){
 
-    let graphData = {
-      nodes: [
-        // { id: 'x', namespace: 1 },
-        // { id: 'y', namespace: 2 },
-      ],
-      links: [
-        // { source: 'x', target: 'y', value: 1 }
-      ],
-      legend: undefined,
-    };
-
-    for (let triple of this.response.results.bindings) {
-      if (
-        graphData.nodes.find((n) => n.id == triple.subject.value) == undefined
-      ) {
-        let subjectNamespaceId = this.getNamespaceIndex(
-          triple.object.value
-        );
-        let node = { id: triple.subject.value, namespace: subjectNamespaceId };
-        graphData.nodes.push(node);
-
-      }
-      if (
-        graphData.nodes.find((n) => n.id == triple.object.value) == undefined
-      ) {
-        let objectNamespaceId = this.getNamespaceIndex(triple.subject.value);
-        let node = { id: triple.object.value, namespace: objectNamespaceId };
-        graphData.nodes.push(node);
-      }
-      let link = {
-        source: triple.subject.value,
-        target: triple.object.value,
-        label: triple.predicate.value,
-      };
-      graphData.links.push(link);
-    }
-    graphData.legend = this.namespaces;
-    return graphData;
-  }
   /**
    * building details
    * @param {*} query
@@ -152,7 +107,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
 
 
   /**
-   * return  a builginG id
+   * return  a building id
    * @return {String}
    */
   getBuildingID(url){
@@ -161,7 +116,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
   }
 
   /**
-   * return  details for a building
+   * return  details of a building
    * @return {Array}
    */
   async  getBuildingDetails(buildingId){
@@ -175,7 +130,9 @@ export class SparqlEndpointResponseProvider extends EventSender {
     var json=JSON.stringify(results);
     var valuesRenvoyees=JSON.parse(json);
     for(var i=0;i<Object.keys(valuesRenvoyees).length;i++){
-      tabDetails.push(valuesRenvoyees[i].object.value);
+      if(!(valuesRenvoyees[i].object.value.includes('#Building')) && !(valuesRenvoyees[i].object.value.includes('#NamedIndividual')) ){
+        tabDetails.push(valuesRenvoyees[i].object.value);
+      }
     }
     return tabDetails;
   }
@@ -203,25 +160,18 @@ export class SparqlEndpointResponseProvider extends EventSender {
       buildingDetails=await this.getBuildingDetails(buildingId);
 
       for(var i=0; i<buildingDetails.length;i++){
-        let node={ id: buildingDetails[i], namespace: 12345 };
-        graphData.nodes.push(node);
+        if(graphData.nodes.find((n)=>n.id==buildingDetails[i])==undefined){
+          let node={ id: buildingDetails[i], namespace:2};
+          graphData.nodes.push(node);
+        }
       }
 
-      if (
-        graphData.nodes.find((n) => n.id == triple.subject.value) == undefined
-      ) {
-        let subjectNamespaceId = this.getNamespaceIndex(
-          triple.subjectType.value
-        );
-
+      if (graphData.nodes.find((n) => n.id == triple.subject.value) == undefined) {
+        let subjectNamespaceId = this.getNamespaceIndex(triple.subject.value);
         let node = { id: triple.subject.value, namespace: subjectNamespaceId };
         graphData.nodes.push(node);
-
-
       }
-      if (
-        graphData.nodes.find((n) => n.id == triple.object.value) == undefined
-      ) {
+      if (graphData.nodes.find((n) => n.id == triple.object.value) == undefined) {
         let objectNamespaceId = this.getNamespaceIndex(triple.objectType.value);
         let node = { id: triple.object.value, namespace: objectNamespaceId };
         graphData.nodes.push(node);
@@ -231,9 +181,9 @@ export class SparqlEndpointResponseProvider extends EventSender {
         target: triple.object.value,
         label: triple.predicate.value,
       };
-      for(var i=0; i<buildingDetails.length;i++){
+      for(var j=0; j<buildingDetails.length;j++){
         let link = {
-          source: buildingDetails[i],
+          source: buildingDetails[j],
           target: triple.object.value,
           label: triple.predicate.value,
         };
@@ -245,14 +195,7 @@ export class SparqlEndpointResponseProvider extends EventSender {
     return graphData;
   }
 
-  /**
-   * return the most recently cached query response formatted for a table.
-   * @return {Object | undefined}
-   */
-  getResponseDataAsTable() {
-    //TODO: implement me!
-    return undefined;
-  }
+
 
   /**
    * Tokenize a URI into a namespace and id
@@ -298,12 +241,4 @@ export class SparqlEndpointResponseProvider extends EventSender {
     return 'EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA';
   }
 
-  // Mes ajouts
-  static get EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA() {
-    return 'EVENT_ENDPOINT_RESPONSE_UPDATED_JSON_DATA';
-  }
-
-  static get EVENT_BUILDING_DETAILS(){
-    return 'EVENT_BUILDING_DETAILS';
-  }
 }
