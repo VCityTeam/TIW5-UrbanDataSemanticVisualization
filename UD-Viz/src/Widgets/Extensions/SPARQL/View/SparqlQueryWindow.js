@@ -148,59 +148,83 @@ WHERE {
    * @param {string[]} columns
    * @returns
    */
-  dataAsTable(data, columns) {
+  dataAsTable(data, columns, filterSelectId) {
     var sortAscending = true;
-    var table = d3.select('body').append('table')
-    var thead = table.append('thead')
+    var table = d3.select('#'+this.dataViewId).append('table')
+    var thead = table.append('thead');
     var tbody = table.append('tbody');
+    var filter = document.getElementById(this.filterValue);
+    var filterValue = document.getElementById(this.filterValue).value;
+    
+    //Add event listener on input field to update table 
+    filter.addEventListener('change', updates);
+    
+    updates([])
+    function updates(e){
+      //Clear old table
+      table.selectAll("tr").remove()
+      table.selectAll("td").remove()
+      if (e.target) {
+        filterValue = e.target.value
+        var column = document.getElementById(filterSelectId).value;
+      }
+      //Filter data by filtertype
+      if (filterValue && filterValue !== ""){
+        var dataFilter = data.filter(function(d,i){
+          if ((typeof d[column] === "string"  && d[column].includes(filterValue)) || (typeof d[column] === "number" && d[column] == filterValue)) 
+          {
+            return d
+          };
+        });
+      }else {
+        var dataFilter=data
+      }
 
-    // append the header row
-    var headers = thead.append('tr')
-        .selectAll('th')
-        .data(columns).enter()
-        .append('th')
-        .text(function (column) { return column; })
-        .on('click', function (d) {
-          headers.attr('class', 'header');
-
-          if (sortAscending) {
-            console.log("sort ascending");
-            console.log("rows: ",rows._groups[0][0].__data__.id);
-            rows._groups[0].sort(function(a, b) {
-              console.log("column: ",d.srcElement.__data__);
-              console.log(a.__data__[d.srcElement.__data__]);
-              return d3.ascending(b.__data__[d.srcElement.__data__], a.__data__[d.srcElement.__data__]);
-            });
-            sortAscending = false;
-            console.log(rows);
-            this.className = 'aes';
-            } 
+      //append the header row and click event on column to sort table by this column
+      var headers = thead.append('tr')
+      .selectAll('th')
+      .data(columns).enter()
+      .append('th')
+      .text(function (column) { return column; })
+      .on('click', function (d) {
+        headers.attr('class', 'header');
+      
+        if (sortAscending) {
+          //sort tables rows data
+          rows._groups[0].sort(function(a, b) {
+            return d3.ascending(a.__data__[d.srcElement.__data__], b.__data__[d.srcElement.__data__]);
+          });
+          //update rows in table
+          rows.sort(function(a, b) {
+            return d3.descending(b[d], a[d]);
+          });
+          sortAscending = false;
+          this.className = 'aes';
+          } 
         else {
-            console.log("sort descending");
-            rows.sort(function(a, b) {
-              console.log("column: ",d.srcElement.__data__);
-              console.log(b.__data__[d.srcElement.__data__]);
-              return d3.descending(b[d], a[d]); 
-            });
-            sortAscending = true;
-            this.className = 'des';
-            }
-
+          rows._groups[0].sort(function(a, b) {
+            return d3.descending(a.__data__[d.srcElement.__data__], b.__data__[d.srcElement.__data__]);
+          });
+          rows.sort(function(a, b) {
+            return d3.descending(b[d], a[d]);
+          });
+          sortAscending = true;
+          this.className = 'des';
+        }  
       });
-
-    // create a row for each object in the data
-    var rows = table.append('tbody').selectAll('tr')
-                   .data(data).enter()
-                   .append('tr');
-
-    // create a cell in each row for each column
-    var rows = table.append('tbody').selectAll('tr')
-                   .data(data).enter()
-                   .append('tr');
+      
+      // create a row for each object in the data
+      var rows = tbody.selectAll('tr')
+                    .data(dataFilter).enter()
+                    .append('tr');
+      rows.exit().remove();
       rows.selectAll('td')
         .data(function (d) {
             return columns.map(function (k) {
-                return { 'value': d[k], 'name': k};
+                return {
+                  'value': d[k]?d[k]:0,
+                  'name': k
+                };
             });
         }).enter()
         .append('td')
@@ -210,8 +234,7 @@ WHERE {
         .text(function (d) {
             return d.value;
         });
-
-    return table;
+    }  
   }
 
   /**
@@ -222,16 +245,12 @@ WHERE {
   updateDataView(data, viewType) {
     switch(viewType){
       case 'graph':
-        // this.hideJsonWindow();
-        // this.showGraphWindow();
         this.dataView.innerHTML="";
         this.graph.update(data);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.append(this.graph.data);
         break;
       case 'json':
-        // this.hideGraphWindow();
-        // this.showJsonWindow();
         this.dataView.style['visibility'] = 'visible';
         this.dataView.innerHTML="";
         this.dataView.append(renderjson//.set_show_by_default(true)
@@ -251,11 +270,12 @@ WHERE {
             <option value="id">Id </option>
             <option value="namespace">Namespace</option>
           </select>
+          <label>Set value: </label>
+          <input id="${this.filterValue}" type="text" value=""/>
         `;
         this.dataView.appendChild(select);
         this.dataView.style['visibility'] = 'visible';
-        let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
-        this.dataView.appendChild(result._parents[0].getElementsByTagName('table')[0]);
+        this.dataAsTable(data.nodes, ['id', 'namespace'],this.filterSelectId);
         this.dataView.querySelector("table").style['border']='1px solid white';
         this.dataView.querySelector("table").style['width']='100%';
         var sheet = window.document.styleSheets[0];
@@ -362,6 +382,10 @@ WHERE {
 
   get filterSelectId() {
     return `${this.windowId}_filterSelect`;
+  }
+
+  get filterValue() {
+    return `${this.windowId}_filterValue`;
   }
 
   get resultSelect() {

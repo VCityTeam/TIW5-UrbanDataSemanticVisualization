@@ -16,7 +16,7 @@
   padding-top: 3px;
   visibility: hidden;
   overflow: scroll;
-  height: 200px;
+  height: 300px;
 }
 #_window_sparqlQueryWindow_semantic_data_view {
   visibility: hidden;
@@ -36,4 +36,12 @@
 .d3_graph {
   width: 100%;
   background-color: rgb(255, 255, 255);
+}
+
+th.des:after {
+  content: "\21E9";
+}
+
+th.aes:after {
+  content: "\21E7";
 }
