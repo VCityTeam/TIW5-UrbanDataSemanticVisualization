@@ -170,6 +170,19 @@ export class Graph {
       .attr('height', 10)
       .style('fill', 'black')
       .append('title')
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 58)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'rgb(31, 119, 180)')
+      .append('title')
 
     this.svg
       .append('g')
@@ -187,6 +200,14 @@ export class Graph {
       .attr('x', 24)
       .attr('y', 52)
       .text('Common data');
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 68)
+      .text('Batiment details');
   }
 
   /**
