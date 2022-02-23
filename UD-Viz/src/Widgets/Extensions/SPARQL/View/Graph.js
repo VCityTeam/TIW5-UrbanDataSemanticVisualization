@@ -15,7 +15,7 @@ export class Graph {
     this.window = window;
     this.height = height;
     this.width = width;
-
+    
 
     this.svg = d3
       .create('svg')
@@ -36,7 +36,7 @@ export class Graph {
     const nodes = data.nodes.map((d) => Object.create(d));
     const namespaces = data.legend;
 
-
+    
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -49,7 +49,7 @@ export class Graph {
     const zoom = d3.zoom().on('zoom', this.handleZoom);
 
     this.svg.call(zoom)
-
+    
 
     const link = this.svg
       .append('g')
@@ -59,7 +59,7 @@ export class Graph {
       .data(links)
       .join('line')
       .attr('stroke-width', (d) => Math.sqrt(d.value))
-      .attr("stroke",function (d) {
+      .attr("stroke",function (d) { 
         if(d.label.includes("prefLabel"))
         return 'rgb(13, 94, 8)'
         else if(d.label.includes("consistsOfBuildingPart"))
@@ -86,7 +86,7 @@ export class Graph {
       .join('circle')
       .attr('r', 5)
       //.attr('fill', (d) => colorScale(d.namespace))
-      .attr('fill', function (d) {
+      .attr('fill', function (d) { 
         if(d.id.includes("2017"))
         return "black";
         else if(d.id.includes("inconnu"))
@@ -102,12 +102,12 @@ export class Graph {
 
     node.append('title').text((d) => d.id);
     // Test sur les noeuds v
-
+    
     var label = this.svg.selectAll(".mytext")
                         .data(nodes)
                         .enter()
                         .append("text")
-                        .text(function (d) {
+                        .text(function (d) { 
                           if(d.id.includes("#") && d.namespace==1)
                           //return d.id.split("#")[1];
                           return '';
@@ -130,26 +130,35 @@ export class Graph {
     //                     .data(links)
     //                     .enter()
     //                     .append("text")
-    //                     .text(function (d) {
+    //                     .text(function (d) { 
     //                       if(d.label.includes("#"))
     //                       return d.label.split("#")[1]
     //                       //else return 'Object member'
     //                      })
     //                     .style("text-anchor", "middle")
     //                     .style("fill", "#555")
-
+                        
     //                     .style("font-family", "Arial")
     //                     .style("font-size", 10)
     //                     .attr("class","myclass")
     //                     .call(this.drag(simulation))
     //******************************************/
     simulation.on('tick', () => {
+      label
+        .attr("x", function(d){ return d.x; })
+        .attr("y", function (d) {return d.y - 10; });
       link
         .attr('x1', (d) => d.source.x)
         .attr('y1', (d) => d.source.y)
         .attr('x2', (d) => d.target.x)
         .attr('y2', (d) => d.target.y);
-
+      // linkText
+      //   .attr("x", function(d) {
+      //       return ((d.source.x + d.target.x)/2);
+      //   })
+      //   .attr("y", function(d) {
+      //       return ((d.source.y + d.target.y)/2);
+      //   });
       node.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
     });
 

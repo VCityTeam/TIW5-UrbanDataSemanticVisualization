@@ -304,7 +304,7 @@ WHERE {
         <option value="timeline">Timeline</option>
       </select>
       <div id="${this.dataViewId}"></div>
-      <div id="${this.semanticDataViewId}"></div>
+      <!--- <div id="${this.semanticDataViewId}"></div> ---> 
       <div id="${this.jsonDataViewId}"></div>
       
       `;
