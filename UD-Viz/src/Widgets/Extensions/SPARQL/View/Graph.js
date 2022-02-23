@@ -108,7 +108,10 @@ export class Graph {
                         .enter()
                         .append("text")
                         .text(function (d) { 
-                          if(d.id.includes("#"))
+                          if(d.id.includes("#") && d.namespace==1)
+                          //return d.id.split("#")[1];
+                          return '';
+                          else if(d.id.includes("#"))
                           return d.id.split("#")[1];
                           else return d.id;
                          })
