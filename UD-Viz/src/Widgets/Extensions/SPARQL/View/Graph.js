@@ -375,6 +375,7 @@ export class Graph {
    */
   clear() {
     this.svg.selectAll('g').remove();
+    this.svg.selectAll('text').remove();
   }
 
   /**
