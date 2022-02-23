@@ -7,7 +7,6 @@ import './SparqlQueryWindow.css';
 import * as renderjson from './JsonRender';
 import * as d3 from 'd3';
 
-
 /**
  * The SPARQL query window class which provides the user interface for querying
  * a SPARQL endpoint and displaying the endpoint response.
@@ -276,6 +275,17 @@ WHERE {
 
     }
    
+  }
+  /**
+   * Update the window to show semantic data of given node
+   * @param {*} data  SPARQL query response data
+   */
+
+  updateSemanticDataView(data) {
+    this.building.update(data);
+    this.semanticDataView.style['visibility'] = 'visible';
+    this.semanticDataView.innerHTML='';
+    this.semanticDataView.append(this.building.data);
   }
 
   // SPARQL Window getters //
