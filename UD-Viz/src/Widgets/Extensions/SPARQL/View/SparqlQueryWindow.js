@@ -4,7 +4,7 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
-import { JsonView } from './JsonView';
+import * as renderjson from './JsonRender';
 import * as d3 from 'd3';
 
 
@@ -381,6 +381,21 @@ WHERE {
   }
   set idBatiment(val) {
     this.idBatiment=val;
+  }
+  get filterSelectId() {
+    return `${this.windowId}_filter_select`;
+  }
+
+  get filterSelect() {
+    return document.getElementById(this.filterSelectId);
+  }
+
+  get filterInputId() {
+    return `${this.windowId}_filter_input`;
+  }
+
+  get filterInput() {
+    return document.getElementById(this.filterInputId);
   }
 
   static get EVENT_NODE_SELECTED() {
