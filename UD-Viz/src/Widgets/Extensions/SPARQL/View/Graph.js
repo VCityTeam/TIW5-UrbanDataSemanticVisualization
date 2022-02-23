@@ -53,12 +53,27 @@ export class Graph {
 
     const link = this.svg
       .append('g')
-      .attr('stroke', '#999')
+      //.attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
       .selectAll('line')
       .data(links)
       .join('line')
-      .attr('stroke-width', (d) => Math.sqrt(d.value));
+      .attr('stroke-width', (d) => Math.sqrt(d.value))
+      .attr("stroke",function (d) { 
+        if(d.label.includes("prefLabel"))
+        return 'rgb(13, 94, 8)'
+        else if(d.label.includes("consistsOfBuildingPart"))
+        return 'rgb(166, 236, 8)'
+        else if(d.label.includes("creationDate"))
+        return 'red'
+        else if(d.label.includes("coordinateDimension"))
+        return 'rgb(151, 107, 0)'
+        else if(d.label.includes("altLabel"))
+        return 'rgb(151, 0, 185)'
+        else if(d.label.includes("cityObjectMember"))
+        return 'rgb(82, 235, 8)'
+        else return 'rgb(151, 107, 185)'
+       })
 
     const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -107,21 +122,22 @@ export class Graph {
                           this.window.sendEvent(SparqlQueryWindow.EVENT_NODE_SELECTED, d.path[0].textContent)
                         )
     // *****************************************
-    var linkText = this.svg.selectAll(".mylink")
-                        .data(links)
-                        .enter()
-                        .append("text")
-                        .text(function (d) { 
-                          if(d.label.includes("#"))
-                          return d.label.split("#")[1]
-                          //else return 'Object member'
-                         })
-                        .style("text-anchor", "middle")
-                        .style("fill", "#555")
-                        .style("font-family", "Arial")
-                        .style("font-size", 10)
-                        .attr("class","myclass")
-                        .call(this.drag(simulation))
+    // var linkText = this.svg.selectAll(".mylink")
+    //                     .data(links)
+    //                     .enter()
+    //                     .append("text")
+    //                     .text(function (d) { 
+    //                       if(d.label.includes("#"))
+    //                       return d.label.split("#")[1]
+    //                       //else return 'Object member'
+    //                      })
+    //                     .style("text-anchor", "middle")
+    //                     .style("fill", "#555")
+                        
+    //                     .style("font-family", "Arial")
+    //                     .style("font-size", 10)
+    //                     .attr("class","myclass")
+    //                     .call(this.drag(simulation))
     //******************************************/
     simulation.on('tick', () => {
       label
@@ -132,13 +148,13 @@ export class Graph {
         .attr('y1', (d) => d.source.y)
         .attr('x2', (d) => d.target.x)
         .attr('y2', (d) => d.target.y);
-      linkText
-        .attr("x", function(d) {
-            return ((d.source.x + d.target.x)/2);
-        })
-        .attr("y", function(d) {
-            return ((d.source.y + d.target.y)/2);
-        });
+      // linkText
+      //   .attr("x", function(d) {
+      //       return ((d.source.x + d.target.x)/2);
+      //   })
+      //   .attr("y", function(d) {
+      //       return ((d.source.y + d.target.y)/2);
+      //   });
       node.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
     });
 
@@ -183,6 +199,84 @@ export class Graph {
       .attr('height', 10)
       .style('fill', 'rgb(31, 119, 180)')
       .append('title')
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 74)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'rgb(166, 236, 8)')
+      .append('title')
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 90)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'red')
+      .append('title')
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 106)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'rgb(151, 107, 0)')
+      .append('title')
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 122)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'rgb(151, 0, 185)')
+      .append('title')
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 138)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'rgb(82, 235, 8)')
+      .append('title')
+    this.svg
+      .append('g')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+      .selectAll('rect')
+      .data(namespaces)
+      .join('rect')
+      .attr('x', 10)
+      .attr('y', 154)
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', 'rgb(13, 94, 8)')
+      .append('title')
 
     this.svg
       .append('g')
@@ -208,6 +302,54 @@ export class Graph {
       .attr('x', 24)
       .attr('y', 68)
       .text('Batiment details');
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 84)
+      .text('consistsOfBuildingPart');
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 100)
+      .text('creationDate');
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 116)
+      .text('coordinateDimension');
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 132)
+      .text('altLabel');
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 148)
+      .text('cityObjectMember');
+    this.svg
+      .append('g')
+      .selectAll('text')
+      .data(namespaces)
+      .join('text')
+      .attr('x', 24)
+      .attr('y', 164)
+      .text('prefLabel');
   }
 
   /**
