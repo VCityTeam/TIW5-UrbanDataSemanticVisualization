@@ -116,6 +116,7 @@ export class Graph {
                         .style("fill", "#555")
                         .style("font-family", "Arial")
                         .style("font-size", 10)
+                        //.style("font-weight", 'bold')
                         .attr("class","myclass")
                         .call(this.drag(simulation))
                         .on('click', (d) =>
@@ -301,7 +302,7 @@ export class Graph {
       .join('text')
       .attr('x', 24)
       .attr('y', 68)
-      .text('Batiment details');
+      .text('Unique Building data');
     this.svg
       .append('g')
       .selectAll('text')
