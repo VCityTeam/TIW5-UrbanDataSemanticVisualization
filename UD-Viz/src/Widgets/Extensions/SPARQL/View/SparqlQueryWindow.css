@@ -16,24 +16,37 @@
   padding-top: 3px;
   visibility: hidden;
   overflow: scroll;
-  height: 200px;
+  height: 400px
 }
-#_window_sparqlQueryWindow_semantic_data_view {
+
+#filter_div{
+  position: fixed;
+  background-color: rgba(30,30,30,0.7);
+}
+/* #_window_sparqlQueryWindow_semantic_data_view {
   visibility: hidden;
   width: 100%;
   padding-top: 3px;
   overflow: scroll;
-  height: 150px;
+  height: 400px;
 }
 #_window_sparqlQueryWindow_json_data_view{
   visibility: hidden;
-  width: 100%;
+  width: 400px;
   padding-top: 3px;
   overflow: scroll;
-  height: 200px;
-}
+} */
 
 .d3_graph {
   width: 100%;
   background-color: rgb(255, 255, 255);
+}
+
+
+th.des:after {
+  content: "\21E9";
+}
+
+th.aes:after {
+  content: "\21E7";
 }

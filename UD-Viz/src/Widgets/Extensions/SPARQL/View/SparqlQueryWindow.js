@@ -4,8 +4,7 @@ import { Graph } from './Graph';
 import { LayerManager } from '../../../Components/Components';
 import { ExtendedCityObjectProvider } from '../ViewModel/ExtendedCityObjectProvider';
 import './SparqlQueryWindow.css';
-import { BuildingGraph } from './BuildingGraph';
-import { JsonView } from './JsonView';
+import * as renderjson from './JsonRender';
 import * as d3 from 'd3';
 
 /**
@@ -18,9 +17,7 @@ export class SparqlQueryWindow extends Window {
    * @param {SparqlEndpointResponseProvider} sparqlProvider The SPARQL Endpoint Response Provider
    * @param {ExtendedCityObjectProvider} cityObjectProvider The City Object Provider
    * @param {LayerManager} layerManager The UD-Viz LayerManager.
-   * 
    */
- 
   constructor(sparqlProvider, cityObjectProvider, layerManager) {
     super('sparqlQueryWindow', 'SPARQL Query');
 
@@ -51,21 +48,6 @@ export class SparqlQueryWindow extends Window {
      * @type {Graph}
      */
     this.graph = new Graph(this);
-
-
-    /**
-     * Contains the D3 graph view to display building
-     *
-     * @type {Graph}
-     */
-    this.building=new BuildingGraph(this);
-
-    /**
-     * Contains the D3 Json View
-     *
-     * @type {Graph}
-     */
-    this.jsonView=new JsonView(this);
 
     /**
      * The initial SPARQL query to display upon window initialization.
@@ -106,33 +88,22 @@ WHERE {
    * the window is actually usable ; service event listerers are set here.
    * @param {SparqlEndpointService} service The SPARQL endpoint service.
    */
-  windowCreated() 
-  {
+  windowCreated() {
     this.form.onsubmit = () => {
       this.sparqlProvider.querySparqlEndpointService(this.queryTextArea.value);
       return false;
     };
-  
+
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED,
       (data) => this.updateDataView(data, document.getElementById(this.resultSelectId).value)
     );
 
-    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) => {
-      this.semanticDataView.hidden=false;
-      var idBatiment= this.sparqlProvider.tokenizeURI(uri).id; //get id of selected building
-      //Get building informations based on id
-      var semantic_data_query = `PREFIX mydata: <https://github.com/VCityTeam/UD-Graph/LYON_1ER_BATI_2015-20_bldg-patched#>
-    SELECT * 
-    WHERE {?subject ?predicate ?object . 
-    FILTER((?subject = mydata:${idBatiment}))
-    }`;
-      this.sparqlProvider.querySparqlEndpointServiceSemanticData(semantic_data_query);
-      return this.cityObjectProvider.selectCityObjectByBatchTable(
+    this.addEventListener(SparqlQueryWindow.EVENT_NODE_SELECTED, (uri) =>
+      this.cityObjectProvider.selectCityObjectByBatchTable(
         'gml_id',
         this.sparqlProvider.tokenizeURI(uri).id
-      );
-    }
+      )
     );
     this.sparqlProvider.addEventListener(
       SparqlEndpointResponseProvider.EVENT_ENDPOINT_RESPONSE_UPDATED_SEMANTIC_DATA,
@@ -147,36 +118,108 @@ WHERE {
    * @param {string[]} columns
    * @returns
    */
-  dataAsTable(data, columns) {
-    var table = d3.select('body').append('table')
-    var thead = table.append('thead')
+  dataAsTable(data, columns, filterSelect) {
+    var sortAscending = true;
+    var table = d3.select('#'+this.dataViewId).append('table')
+    var thead = table.append('thead');
     var tbody = table.append('tbody');
+    var filter = this.filterInput;
+    var filterValue = this.filterInputId.value;
+    //Add event listener on input field to update table
+    filter.addEventListener('change', updates);
 
-    // append the header row
-    thead.append('tr')
-        .selectAll('th')
-        .data(columns).enter()
-        .append('th')
-        .text(function (column) { return column; });
+    updates([])
+    function updates(e){
+      //clear old table
+      table.selectAll("tr").remove()
+      table.selectAll("td").remove()
+      var element = document.getElementById("no_result");
+      if(element)
+        element.parentNode.removeChild(element);
+      //check if element filter input is changed
+      if (e.target) {
+        filterValue = e.target.value
+        var column = filterSelect.value;
+      }
+      //filter data by filtertype
+      if (filterValue && filterValue !== ""){
+        var dataFilter = data.filter(function(d,i){
+          if ((typeof d[column] === "string"  && d[column].includes(filterValue)) || (typeof d[column] === "number" && d[column] == filterValue))
+          {
+            return d;
+          };
+        });
+      }else {
+        var dataFilter=data
+      }
 
-    // create a row for each object in the data
-    var rows = tbody.selectAll('tr')
-        .data(data)
-        .enter()
-        .append('tr');
+      //append the header row and click event on column to sort table by this column
+      var headers = thead.append('tr')
+      .selectAll('th')
+      .data(columns).enter()
+      .append('th')
+      .text(function (column) { return column; })
+      .style('cursor','pointer')
+      .on('click', function (d) {
+        headers.attr('class', 'header');
 
-    // create a cell in each row for each column
-    var cells = rows.selectAll('td')
-        .data(function (row) {
-          return columns.map(function (column) {
-            return {column: column, value: row[column]};
+        if (sortAscending) {
+          //sort tables rows data
+          rows._groups[0].sort(function(a, b) {
+            return d3.ascending(a.__data__[d.srcElement.__data__], b.__data__[d.srcElement.__data__]);
           });
-        })
-        .enter()
-        .append('td')
-        .text(function (d) { return d.value; });
+          //update rows in table
+          rows.sort(function(a, b) {
+            return d3.descending(b[d], a[d]);
+          });
+          sortAscending = false;
+          this.className = 'aes';
+          }
+        else {
+          rows._groups[0].sort(function(a, b) {
+            return d3.descending(a.__data__[d.srcElement.__data__], b.__data__[d.srcElement.__data__]);
+          });
+          rows.sort(function(a, b) {
+            return d3.descending(b[d], a[d]);
+          });
+          sortAscending = true;
+          this.className = 'des';
+        }
+      });
+      headers.append("title").text("click to sort");
+      if (dataFilter.length == 0) {
+        var noResultDiv = document.createElement('div');
+        noResultDiv.id = "no_result";
+        noResultDiv.innerHTML = "No result found, try again!";
+        document.getElementById('_window_sparqlQueryWindow_data_view').appendChild(noResultDiv);
+      }
 
-    return table;
+      else {
+        // create a row for each object in the data
+        var rows = tbody.selectAll('tr')
+                      .data(dataFilter).enter()
+                      .append('tr');
+        rows.exit().remove();
+        rows.selectAll('td')
+          .data(function (d) {
+              return columns.map(function (k) {
+                  return {
+                    'value': d[k]?d[k]:0,
+                    'name': k
+                  };
+              });
+          }).enter()
+          .append('td')
+          .attr('data-th', function (d) {
+              return d.name;
+          })
+          .text(function (d) {
+              return d.value;
+          });
+      }
+
+
+    }
   }
 
   /**
@@ -187,37 +230,48 @@ WHERE {
   updateDataView(data, viewType) {
     switch(viewType){
       case 'graph':
-        // this.hideJsonWindow();
-        // this.showGraphWindow();
         this.dataView.innerHTML="";
         this.graph.update(data);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.append(this.graph.data);
         break;
       case 'json':
-        // this.hideGraphWindow();
-        // this.showJsonWindow();
-        var  jsonData=JSON.stringify(data, undefined, 2);
         this.dataView.style['visibility'] = 'visible';
         this.dataView.innerHTML="";
-        this.dataView.append(jsonData);
-        console.log(jsonData);
+        this.dataView.append(renderjson//.set_show_by_default(true)
+          //.set_max_string_length(1)
+          //.set_max_string_length(5)
+          .set_icons('+', '-')
+          .set_max_string_length(40)
+          (data));
+        console.log(data);
         break;
       case 'table':
         this.dataView.innerHTML="";
-        var jsonData=JSON.stringify(data,undefined, 2);
+        var selectDiv = document.createElement('div');
+        selectDiv.id = "filter_div"
+        selectDiv.innerHTML = `
+          <label>Select filter:</label>
+          <select id="${this.filterSelectId}">
+            <option value="id">Id </option>
+            <option value="namespace">Namespace</option>
+          </select>
+          <label>Type filter value: </label>
+          <input id="${this.filterInputId}" type="text" value=""/>
+        `;
+        this.dataView.appendChild(selectDiv);
         this.dataView.style['visibility'] = 'visible';
-        let result = this.dataAsTable(data.nodes, ['id', 'namespace']);
-        this.dataView.append(result._parents[0].getElementsByTagName('table')[0]);
+        this.dataAsTable(data.nodes, ['id', 'namespace'],this.filterSelect);
         this.dataView.querySelector("table").style['border']='1px solid white';
         this.dataView.querySelector("table").style['width']='100%';
         var sheet = window.document.styleSheets[0];
-        sheet.insertRule('thead { color: #90EE90; margin:auto; }', sheet.cssRules.length);
-
-        sheet.insertRule('tr {border-style: dotted solid !important; }', sheet.cssRules.length);
+        sheet.insertRule('table {  margin-top:30px; !important;}', sheet.cssRules.length);
+        sheet.insertRule('thead { color: #90EE90; margin:auto; border: 1px solid white !important;}', sheet.cssRules.length);
+        sheet.insertRule('tr {border: 1px solid white !important; }', sheet.cssRules.length);
+        sheet.insertRule('td {border: 1px solid white !important; }', sheet.cssRules.length);
         break;
       default:
-        console.log('ce format est pas disponible');
+        console.log('ce format n\'est pas disponible');
 
     }
    
@@ -250,7 +304,7 @@ WHERE {
         <option value="timeline">Timeline</option>
       </select>
       <div id="${this.dataViewId}"></div>
-      <div id="${this.semanticDataViewId}"></div>
+      <!--- <div id="${this.semanticDataViewId}"></div> ---> 
       <div id="${this.jsonDataViewId}"></div>
       
       `;
@@ -337,6 +391,21 @@ WHERE {
   }
   set idBatiment(val) {
     this.idBatiment=val;
+  }
+  get filterSelectId() {
+    return `${this.windowId}_filter_select`;
+  }
+
+  get filterSelect() {
+    return document.getElementById(this.filterSelectId);
+  }
+
+  get filterInputId() {
+    return `${this.windowId}_filter_input`;
+  }
+
+  get filterInput() {
+    return document.getElementById(this.filterInputId);
   }
 
   static get EVENT_NODE_SELECTED() {
