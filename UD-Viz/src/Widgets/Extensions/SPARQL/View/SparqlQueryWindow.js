@@ -159,6 +159,7 @@ WHERE {
       .data(columns).enter()
       .append('th')
       .text(function (column) { return column; })
+      .style('cursor','pointer')
       .on('click', function (d) {
         headers.attr('class', 'header');
 
@@ -185,11 +186,8 @@ WHERE {
           this.className = 'des';
         }
       });
-
+      headers.append("title").text("click to sort");
       if (dataFilter.length == 0) {
-        console.log("no result found");
-        console.log(this.dataView);
-        console.log(this.dataViewId);
         var noResultDiv = document.createElement('div');
         noResultDiv.id = "no_result";
         noResultDiv.innerHTML = "No result found, try again!";
@@ -250,8 +248,9 @@ WHERE {
         break;
       case 'table':
         this.dataView.innerHTML="";
-        var select = document.createElement('div');
-        select.innerHTML = `
+        var selectDiv = document.createElement('div');
+        selectDiv.id = "filter_div"
+        selectDiv.innerHTML = `
           <label>Select filter:</label>
           <select id="${this.filterSelectId}">
             <option value="id">Id </option>
@@ -260,12 +259,13 @@ WHERE {
           <label>Type filter value: </label>
           <input id="${this.filterInputId}" type="text" value=""/>
         `;
-        this.dataView.appendChild(select);
+        this.dataView.appendChild(selectDiv);
         this.dataView.style['visibility'] = 'visible';
         this.dataAsTable(data.nodes, ['id', 'namespace'],this.filterSelect);
         this.dataView.querySelector("table").style['border']='1px solid white';
         this.dataView.querySelector("table").style['width']='100%';
         var sheet = window.document.styleSheets[0];
+        sheet.insertRule('table {  margin-top:30px; !important;}', sheet.cssRules.length);
         sheet.insertRule('thead { color: #90EE90; margin:auto; border: 1px solid white !important;}', sheet.cssRules.length);
         sheet.insertRule('tr {border: 1px solid white !important; }', sheet.cssRules.length);
         sheet.insertRule('td {border: 1px solid white !important; }', sheet.cssRules.length);

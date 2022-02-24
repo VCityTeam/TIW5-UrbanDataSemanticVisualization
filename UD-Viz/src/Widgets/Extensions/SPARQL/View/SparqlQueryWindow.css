@@ -18,6 +18,11 @@
   overflow: scroll;
   height: 400px
 }
+
+#filter_div{
+  position: fixed;
+  background-color: rgba(30,30,30,0.7);
+}
 /* #_window_sparqlQueryWindow_semantic_data_view {
   visibility: hidden;
   width: 100%;
